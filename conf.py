@@ -1,0 +1,7 @@
+testnet = True
+production = True
+autoload = True
+version = 1
+subscribed = [ 'b6a95f94fef093ee9009b04a09ecb9cb5cba20ab6f13fe0926aeb27b8671df43', \
+'89b813e01fd2ab50bd5aedda4aee32746406b75e78014f98bc36b02f241c2fd2', 'b6075ef65fa9e0601c37ef09dd19f68c266b127e406504833db86d0c071e273a',\
+'b0538fb21e632d4b6595150ddd128eeab8b3842a9fb21751341b1bd3b5d39120']
