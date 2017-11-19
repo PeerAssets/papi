@@ -37,10 +37,10 @@ def init_decks():
         subscribe = deck.id in subscribed     
         if not entry:
             try:
-                D = Deck( deck.id, deck.name, deck.issuer, pa.pautils.issue_mode_to_enum(DeckSpawn(), deck.issue_mode), deck.number_of_decimals, subscribe )
+                D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
                 db.session.add(D)
                 db.session.commit()
-            except IntegrityError as e:
+            except Exception as e:
                 print(e)
                 pass
         else:
@@ -48,17 +48,18 @@ def init_decks():
             db.session.commit()
 
     def add_cards(cards):
-        for cardset in cards:
-            for card in cardset:
-                sys.stdout.write(card.txid +'\r')
-                sys.stdout.flush()
-                card_id = card.txid + str(card.blockseq) + str(card.cardseq)
-                entry = db.session.query(Card).filter(Card.id == card_id).first()   
-                if not entry:
-                    C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
-                    db.session.add(C)
-                db.session.commit()
-        sys.stdout.flush()
+        if cards is not None:
+            for cardset in cards:
+                for card in cardset:
+                    sys.stdout.write(card.txid +'\r')
+                    sys.stdout.flush()
+                    card_id = card.txid + str(card.blockseq) + str(card.cardseq)
+                    entry = db.session.query(Card).filter(Card.id == card_id).first()   
+                    if not entry:
+                        C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
+                        db.session.add(C)
+                    db.session.commit()
+            sys.stdout.flush()
 
     if not autoload:
         decks = [pa.find_deck(node,txid,version)[0] for txid in subscribed]
