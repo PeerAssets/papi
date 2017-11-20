@@ -25,7 +25,6 @@ def init_p2thkeys():
     return print('{} P2TH Key(s) Registered'.format(n))
 
 def init_decks():
-    from itertools import tee
     n = 0
 
     def message(n):
@@ -72,13 +71,12 @@ def init_decks():
 
     else:
         decks = pa.find_all_valid_decks(node, 1 , True)
-        decks, _decks = tee(decks,2)
         while True:
             try: 
                 deck = next(decks)
                 add_deck( deck )
                 if deck.id in subscribed:
-                    add_cards( pa.find_card_transfers(node, next(_decks ) ) )
+                    add_cards( pa.find_card_transfers(node, deck ) )
                 n += 1
                 message(n)
             except StopIteration:
