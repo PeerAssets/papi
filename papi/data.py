@@ -32,19 +32,20 @@ def init_decks():
         sys.stdout.write('{} Decks Loaded\r'.format(n))
 
     def add_deck(deck):
-        entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
-        subscribe = deck.id in subscribed     
-        if not entry:
-            try:
-                D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
-                db.session.add(D)
+        if deck is not None:
+            entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
+            subscribe = deck.id in subscribed     
+            if not entry:
+                try:
+                    D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
+                    db.session.add(D)
+                    db.session.commit()
+                except Exception as e:
+                    print(e)
+                    pass
+            else:
+                db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
                 db.session.commit()
-            except Exception as e:
-                print(e)
-                pass
-        else:
-            db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
-            db.session.commit()
 
     def add_cards(cards):
         if cards is not None:
@@ -64,10 +65,11 @@ def init_decks():
         decks = [pa.find_deck(node,txid,version)[0] for txid in subscribed]
 
         for deck in decks:
-            add_deck(deck)
-            add_cards( pa.find_card_transfers(node, deck) )
-            n += 1
-            message(n)
+            if deck is not None:
+                add_deck(deck)
+                add_cards( pa.find_card_transfers(node, deck) )
+                n += 1
+                message(n)
 
     else:
         decks = pa.find_all_valid_decks(node, 1 , True)
