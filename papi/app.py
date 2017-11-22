@@ -21,7 +21,7 @@ def decks(deck_id):
 
     def get_cards(deck_id):
         cards = []
-        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).all()
+        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
         for card in Cards:
             card = card.__dict__
             del card['_sa_instance_state']
@@ -49,7 +49,18 @@ def decks(deck_id):
 
         return jsonify(decks)
 
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
+def balances(deck_id):
+    balances = []
+    Balances = db.session.query(Balance).all()
 
+    for balance in Balances:
+        balance = balance.__dict__
+        del balance['_sa_instance_state']
+        balances.append(balance)
+        print(balance)
+
+    return jsonify( balances )
 
 if __name__ == '__main__':
     init_db()

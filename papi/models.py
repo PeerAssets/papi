@@ -50,3 +50,18 @@ class Card(db.Model):
         self.blocknum = blocknum
         self.blockseq = blockseq
         self.deck_id = deck_id
+
+class Balance(db.Model):
+    """"""
+    __tablename__ = 'balances' 
+    id = db.Column(db.Integer,primary_key=True, unique=True)
+    card_id = db.Column(db.String)
+    value = db.Column(db.Integer)
+    short_id = db.Column(db.String)
+
+    #----------------------------------------------------------------------
+    def __init__(self, card_id, value, short_id):
+        """"""
+        self.card_id = card_id
+        self.value = value
+        self.short_id = short_id

@@ -1,6 +1,6 @@
 import pypeerassets as pa
-from pypeerassets.paproto_pb2 import DeckSpawn, CardTransfer
-from models import Deck, Card, db
+from models import Deck, Card, Balance, db
+from state import DeckState, init_state
 from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
@@ -87,11 +87,8 @@ def init_decks():
 def init_pa():
     init_p2thkeys()
     init_decks()
+    init_state()
+
 
     sys.stdout.write('PeerAssets version {} Initialized'.format(version))
     sys.stdout.flush()
-
-
-        
-
-        
