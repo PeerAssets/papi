@@ -55,13 +55,13 @@ class Balance(db.Model):
     """"""
     __tablename__ = 'balances' 
     id = db.Column(db.Integer,primary_key=True, unique=True)
-    card_id = db.Column(db.String)
+    account = db.Column(db.String, unique=True)
     value = db.Column(db.Integer)
     short_id = db.Column(db.String)
 
     #----------------------------------------------------------------------
-    def __init__(self, card_id, value, short_id):
+    def __init__(self, account, value, short_id):
         """"""
-        self.card_id = card_id
+        self.account = account
         self.value = value
         self.short_id = short_id
