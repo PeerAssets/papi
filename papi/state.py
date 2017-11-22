@@ -37,25 +37,24 @@ class DeckState:
         def ONCE( amount: int = card.amount ):
             ''' Create an entry and sets value if issuer id does not exist.'''
 
-            Issuer = self.balances.filter( Balance.card_id.like( '%{}'.format(card.sender) ) )
+            Issuer = self.balances.filter( Balance.account.contains( card.sender ) )
 
             if card.sender == self.deck.issuer :
 
                 if Issuer.first() is None:
-                    print(card.sender + card_id )
                     B = Balance( card.sender + card_id , 0, self.short_id)
                     db.session.add(B)
                     db.session.commit()
-                    Issuer = self.balances.filter( Balance.card_id.like( '%{}'.format(card_id) ) )
+                    Issuer = self.balances.filter( Balance.account.contains( card_id ) )
 
                 if Issuer is not None: 
-                    Receiver = self.balances.filter( Balance.id.like('{}%'.format(card.receiver)  ) )
+                    Receiver = self.balances.filter( Balance.account.contains( card.receiver ) )
 
                     if Receiver.first() is None:
                         B = Balance( card.receiver , amount, self.short_id)
                         db.session.add(B)
                         db.session.commit()
-                        Receiver = self.balances.filter( Balance.id.like('{}%'.format(card.receiver) ) )
+                        Receiver = self.balances.filter( Balance.account.contains( card.receiver ) )
 
                     if Receiver.first() is not None:
                         Receiver.update( {"value" : Receiver.first().value  + amount} )
@@ -65,10 +64,10 @@ class DeckState:
             ''' Uses ONCE to create issuer id if it doesn't exist then
                 updates the value by adding new issuance amounts '''
 
-            Issuer = self.balances.filter(Balance.id.contains(self.deck.issuer))
+            Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
             if Issuer.first() is None:
                 ONCE()
-                Issuer = self.balances.filter(Balance.id.contains(self.deck.issuer))
+                Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
             if Issuer.first() is not None:
                 Issuer.first().update( {"value" : Balance.value + amount} )
                 return
@@ -89,14 +88,14 @@ class DeckState:
         return
 
     def process_transaction(self, card):
-        Sender = self.balances.filter(Balance.id == card.sender)
+        Sender = self.balances.filter(Balance.account == card.sender)
 
         if Sender.first() is None:
             return
         elif Sender.first() is not None:
             return
         else:
-            Receiver = self.balances.filter(Balance.id == card.receiver)
+            Receiver = self.balances.filter(Balance.account == card.receiver)
             if Receiver.first() is None:
                 B = Balance(card.receiver, card.amount, self.short_id)
                 db.session.add(B)
@@ -105,14 +104,14 @@ class DeckState:
                 Receiver = self.balances.fiter(id == card.receiver)
                 Receiver.first().update( {'value': Receiver.first().value + card.amount})
 
-            Sender = self.balances.filter(Balance.id == card.sender)
+            Sender = self.balances.filter(Balance.account == card.sender)
             Sender.first().update( {'value': Sender.first().value - card.amount})
             db.session.commit()
 
         return
 
     def process(self):
-        Blocknum = db.session.query(Balance).filter(Balance.id == 'blocknum')
+        Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
 
         for card in self.cards:
 
