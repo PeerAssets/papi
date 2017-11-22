@@ -92,13 +92,10 @@ class DeckState:
         Sender = self.balances.filter(Balance.id == card.sender)
 
         if Sender.first() is None:
-            print('1')
             return
         elif Sender.first() is not None:
-            print('2')
             return
         else:
-            print('3')
             Receiver = self.balances.filter(Balance.id == card.receiver)
             if Receiver.first() is None:
                 B = Balance(card.receiver, card.amount, self.short_id)
@@ -106,11 +103,9 @@ class DeckState:
                 db.session.commit()
             else:
                 Receiver = self.balances.fiter(id == card.receiver)
-                print(Receiver.first().value + card.amount)
                 Receiver.first().update( {'value': Receiver.first().value + card.amount})
 
             Sender = self.balances.filter(Balance.id == card.sender)
-            print(Sender.first())
             Sender.first().update( {'value': Sender.first().value - card.amount})
             db.session.commit()
 
@@ -135,7 +130,6 @@ class DeckState:
                     pass # Need to include blocktime into db per card
                 
                 else:
-                    print('hi')
                     process_transaction(card)
 
 def init_state():
