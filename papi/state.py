@@ -69,7 +69,7 @@ class DeckState:
                 ONCE()
                 Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
             if Issuer.first() is not None:
-                Issuer.first().update( {"value" : Balance.value + amount}, synchronize_session='fetch' )
+                Issuer.update( {"value" : Balance.value + amount}, synchronize_session='fetch' ) #doesnt like when .first() in there, not sure if deletion causes undesired effect
                 return
 
         if self.mode in IntFlag(2):

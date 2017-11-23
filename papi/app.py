@@ -62,12 +62,12 @@ def balances(deck_id):
     if germ_free(deck_id, 'hex'): 
         balances = []
         Balances = db.session.query(Balance).filter_by(short_id = deck_id[0:10]).all()
-
-        for balance in Balances:
-            balance = balance.__dict__
-            del balance['_sa_instance_state']
-            balances.append(balance)
-            print(balance)
+        if Balances:
+            for balance in Balances:
+                balance = balance.__dict__
+                del balance['_sa_instance_state']
+                balances.append(balance)
+                print(balance)
 
         else:
             balances = {'id': 'Error: deck_id does not exist'}
