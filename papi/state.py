@@ -20,13 +20,13 @@ class DeckState:
 
     def counter(self):
 
-        Blocknum = db.session.query(Balance).filter(Balance.id == 'blocknum')
+        Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
 
         if Blocknum.first() is None:
             B = Balance( 'blocknum', 0, self.short_id )
             db.session.add(B)
             db.session.commit()
-            Blocknum = db.session.query(Balance).filter(Balance.id == 'blocknum')
+            Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
         if Blocknum.first() is not None:
             self.cards = self.cards.filter(Card.blocknum >= Blocknum.first().value)
 
@@ -57,7 +57,7 @@ class DeckState:
                         Receiver = self.balances.filter( Balance.account.contains( card.receiver ) )
 
                     if Receiver.first() is not None:
-                        Receiver.update( {"value" : Receiver.first().value  + amount} )
+                        Receiver.update( {"value" : Receiver.first().value  + amount}, synchronize_session='fetch' )
 
 
         def MULTI( amount: int = card.amount ):
@@ -69,7 +69,7 @@ class DeckState:
                 ONCE()
                 Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
             if Issuer.first() is not None:
-                Issuer.first().update( {"value" : Balance.value + amount} )
+                Issuer.first().update( {"value" : Balance.value + amount}, synchronize_session='fetch' )
                 return
 
         if self.mode in IntFlag(2):
