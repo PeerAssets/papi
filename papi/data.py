@@ -89,6 +89,28 @@ def init_pa():
     init_decks()
     init_state()
 
+def germ_free(number, type):
+    length_check = len(str(number))
+
+    if type == 'hex':
+    if length_check == 64:
+        try:
+            int(number, 16) #if not hex will cause error, failing test
+            return True
+        except:
+            return False
+    else:
+        return False
+
+    elif type == 'base58':
+    if length_check == 58:
+        try:
+            int(number, 58) #if not base58 will cause error, failing test
+            return True
+        except:
+            return False
+    else:
+        return False
 
     sys.stdout.write('PeerAssets version {} Initialized'.format(version))
     sys.stdout.flush()

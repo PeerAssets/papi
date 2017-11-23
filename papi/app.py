@@ -19,16 +19,6 @@ def index():
 def decks(deck_id):
     deck = None
 
-    length_check = len(str(deck_id))
-    if length_check == 64:
-        try:
-            int(deck_id, 16) #if not hex will cause error, failing test
-            germ_free = True
-        except:
-            germ_free = False
-    else:
-        germ_free = False
-
     def get_cards(deck_id):
         cards = []
         Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
@@ -38,7 +28,7 @@ def decks(deck_id):
             cards.append(card)
         return cards
 
-    if deck_id is not None and germ_free is True:
+    if deck_id is not None and germ_free(deck_id, 'hex'):
         deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
         if deck:
             deck = deck.__dict__
@@ -48,7 +38,7 @@ def decks(deck_id):
             deck = {'id': 'Error: deck_id does not exist'}
         return jsonify(deck)
 
-    elif deck_id is None and germ_free is True:
+    elif deck_id is None and germ_free(deck_id, 'hex'):
         decks = []
         if not autoload:
             Decks = db.session.query(Deck).filter(Deck.id.in_(subscribed)).all()
@@ -69,17 +59,7 @@ def decks(deck_id):
 @app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
 def balances(deck_id):
 
-    length_check = len(str(deck_id))
-    if length_check == 64:
-        try:
-            int(deck_id, 16) #if not hex will cause error, failing test
-            germ_free = True
-        except:
-            germ_free = False
-    else:
-        germ_free = False
-
-    if germ_free == True: 
+    if germ_free(deck_id, 'hex'): 
         balances = []
         Balances = db.session.query(Balance).filter_by(short_id = deck_id[0:10]).all()
 
