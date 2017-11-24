@@ -1,3 +1,4 @@
+db_engine = 'sqlite:///papi.db'
 testnet = True
 production = True
 autoload = False
