@@ -12,7 +12,7 @@ class DeckState:
         self.issuer = self.deck.issuer
         self.cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq)
         self.counter()
-        self.process()
+        self.process_cards()
 
     @property
     def balances(self):
@@ -46,7 +46,7 @@ class DeckState:
                         self.process_receiver(amount, card)
                         return
                 else:
-                    self.process_sender(amount, card)
+                    self.process_sender(amount, card, tag=True)
                     self.process_receiver(amount, card)
                     return
 
@@ -59,7 +59,7 @@ class DeckState:
 
         def process_sender( amount, card, tag = False):
             ''' Add sender to db if the account doesn't exist and update sender balance ''' 
-            Sender = self.balances.filter( Balance.account == card.sender )
+            Sender = self.balances.filter( Balance.account == card.sender + short_id * tag )
 
             if Sender.first() is not None:
                 Sender.update( {"value" : Sender.first().value  - amount}, synchronize_session='fetch' )
@@ -117,29 +117,47 @@ class DeckState:
         db.session.commit()
         return
 
+    def process_burn(self, card):
+        Receiver = self.balances.filter(Balance.account == 'CardBurn')
+        Sender = self.balances.filter(Balance.account == card.sender)
+
+        if Receiver.first() is not None:
+            Receiver.first().update( {'value': Receiver.first().value + card.amount}, synchronize_session='fetch' )
+        else:
+            B = Balance('CardBurn', card.amount, self.short_id)
+            db.session.add(B)
+            db.session.commit()
+
+        Sender.first().update( {'value': Sender.first().value - card.amount}, synchronize_session='fetch' )
+        return
+
     def process_transaction(self, card):
-        Sender = db.session.query(Balance).filter(Balance.account == card.sender)
+        Sender = self.balances.filter(Balance.account == card.sender)
 
         if Sender.first() is None:
             return
-        elif Sender.first().value >= card.amount:
-            Receiver = db.session.query(Balance).filter(Balance.account == card.receiver)
-            if Receiver.first() is None:
+        if Sender.first().value >= card.amount:
+            Receiver = self.balances.filter(Balance.account == card.receiver)
+            if card.ctype == "CardBurn":
+                process_burn(card)
+                return
+
+            elif Receiver.first() is None:
                 B = Balance(card.receiver, card.amount, self.short_id)
                 db.session.add(B)
                 db.session.commit()
             else:
-                Receiver = db.session.query(Balance).fiter(Balance.account == card.receiver)
+                Receiver = self.balances.fiter(Balance.account == card.receiver)
                 Receiver.first().update( {'value': Receiver.first().value + card.amount}, synchronize_session='fetch' )
 
-            Sender = db.session.query(Balance).filter(Balance.account == card.sender)
+            Sender = self.balances.filter(Balance.account == card.sender)
             Sender.first().update( {'value': Sender.first().value - card.amount}, synchronize_session='fetch' )
             db.session.commit()
 
         return
 
-    def process(self):
-        Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
+    def process_cards(self):
+        Blocknum = self.balances.filter(Balance.account == 'blocknum')
 
         for card in self.cards:
 
