@@ -4,8 +4,32 @@ from state import DeckState, init_state
 from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
+from base58 import b58decode
 
 node = pa.RpcNode(testnet=testnet)
+
+def germ_free(number, type):
+    length_check = len(str(number))
+
+    if type == 'hex':
+        if length_check == 64:
+            try:
+                int(number, 16) #if not hex will cause error, failing test
+                return True
+            except:
+                return False
+        else:
+            return False
+
+    elif type == 'base58':
+        if length_check == 34:
+            try:
+                b58decode(str(number)) #if not base58 will cause error, failing test
+                return True
+            except:
+                return False
+        else:
+            return False
 
 def init_p2thkeys():
 

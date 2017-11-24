@@ -28,14 +28,17 @@ def decks(deck_id):
             cards.append(card)
         return cards
 
-    if deck_id is not None:
+    if deck_id is not None and germ_free(deck_id, 'hex'):
         deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
         if deck:
             deck = deck.__dict__
             del deck['_sa_instance_state']
             deck['cards'] = get_cards(deck_id)
-            return jsonify(deck)
-    else:
+        else:
+            deck = {'id': 'Error: deck_id does not exist'}
+        return jsonify(deck)
+
+    elif deck_id is None and germ_free(deck_id, 'hex'):
         decks = []
         if not autoload:
             Decks = db.session.query(Deck).filter(Deck.id.in_(subscribed)).all()
@@ -49,16 +52,27 @@ def decks(deck_id):
 
         return jsonify(decks)
 
+    else:
+        invalid = {'id': 'Error: not a valid deck_id'}
+        return jsonify( invalid )
+
 @app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
 def balances(deck_id):
-    balances = []
-    Balances = db.session.query(Balance).all()
 
-    for balance in Balances:
-        balance = balance.__dict__
-        del balance['_sa_instance_state']
-        balances.append(balance)
-        print(balance)
+    if germ_free(deck_id, 'hex'): 
+        balances = []
+        Balances = db.session.query(Balance).filter_by(short_id = deck_id[0:10]).all()
+        if Balances:
+            for balance in Balances:
+                balance = balance.__dict__
+                del balance['_sa_instance_state']
+                balances.append(balance)
+                print(balance)
+
+        else:
+            balances = {'id': 'Error: deck_id does not exist'}
+    else:
+        balances = {'id': 'Error: not a valid deck_id'}
 
     return jsonify( balances )
 
