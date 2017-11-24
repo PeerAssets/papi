@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, redirect, url_for
+from sqlalchemy.sql.functions import func
 from data import *
 
 app = Flask(__name__)
@@ -51,10 +52,12 @@ def decks(deck_id):
 
 @app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
 def balances(deck_id):
+    short_id = deck_id[0:10]
     balances = []
-    Balances = db.session.query(Balance).all()
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
-    for balance in Balances:
+    #for balance in Balances.filter( func.char_length( Balance.account ) == 34 ):
+    for balance in Balances.all():
         balance = balance.__dict__
         del balance['_sa_instance_state']
         balances.append(balance)
