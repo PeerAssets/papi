@@ -40,7 +40,7 @@ class DeckState:
             if Issuer.first() is not None:
                 if self.mode in IntFlag(2):
                     ''' Only first occurence of CardIssuance transaction is allowed '''
-                    if Issuer.filter( Balance.account.contains( short_id ) ):
+                    if Issuer.filter( Balance.account.contains( short_id ) ).first() is not None:
                         ''' CardIssue is from the first CardIssue txid (There can be multiple with same txid)'''
                         process_sender(amount, card)
                         process_receiver(amount, card)
@@ -62,10 +62,11 @@ class DeckState:
 
         def process_sender( amount, card, tag = False):
             ''' Add sender to db if the account doesn't exist and update sender balance '''
-            Sender = self.balances.filter( Balance.account == card.sender + short_id * tag )
+
+            Sender = self.balances.filter( Balance.account.contains( card.sender + short_id * tag ) )
 
             if Sender.first() is not None:
-                Sender.update( {"value" : Sender.first().value  - amount}, synchronize_session='fetch' )
+                Sender.update( {"value" : Sender.first().value  - abs(amount) }, synchronize_session='fetch' )
             
             if Sender.first() is None:
                 sender = card.sender + short_id * tag
