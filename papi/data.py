@@ -62,7 +62,7 @@ def init_decks():
             sys.stdout.flush()
 
     if not autoload:
-        decks = [pa.find_deck(node,txid,version)[0] for txid in subscribed]
+        decks = [pa.find_deck(node,txid,version) for txid in subscribed]
 
         for deck in decks:
             if deck is not None:
