@@ -28,37 +28,40 @@ class DeckState:
             db.session.commit()
             Blocknum = self.balances.filter(Balance.account == 'blocknum')
         if Blocknum.first() is not None:
-            self.cards = self.cards.filter(Card.blocknum >= Blocknum.first().value)
+            self.cards = self.cards.filter(Card.blocknum > Blocknum.first().value)
 
     def process_issue(self, card):
         short_id = card.txid[0:10]
 
-        def ONCE( amount: int = card.amount, repeat=False ):
+        def ONCE( amount: int = card.amount ):
 
             Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
 
             if Issuer.first() is not None:
-                if not repeat:
+                if self.mode in IntFlag(2):
                     ''' Only first occurence of CardIssuance transaction is allowed '''
                     if Issuer.filter( Balance.account.contains( short_id ) ):
                         ''' CardIssue is from the first CardIssue txid (There can be multiple with same txid)'''
-                        self.process_sender(amount, card)
-                        self.process_receiver(amount, card)
+                        process_sender(amount, card)
+                        process_receiver(amount, card)
                         return
                 else:
-                    self.process_sender(amount, card, tag=True)
-                    self.process_receiver(amount, card)
+                    process_sender(amount, card, tag=True)
+                    process_receiver(amount, card)
                     return
 
             else:
                 ''' Create a genesis CardIssue account then process receiver '''
                 B = Balance( card.sender + short_id , -abs(amount), self.short_id)
                 db.session.add(B)
-                db.session.commit()
-                self.process_receiver( amount, card)
+                try:
+                    db.session.commit()
+                    process_receiver( amount, card)
+                except IntegrityError:
+                    pass
 
         def process_sender( amount, card, tag = False):
-            ''' Add sender to db if the account doesn't exist and update sender balance ''' 
+            ''' Add sender to db if the account doesn't exist and update sender balance '''
             Sender = self.balances.filter( Balance.account == card.sender + short_id * tag )
 
             if Sender.first() is not None:
@@ -89,7 +92,7 @@ class DeckState:
             Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
 
             if Issuer.first() is not None:
-                if Issuer.filter( Balance.account.contains( short_id ) ).first() is not None:
+                if Issuer.filter( Balance.account.contains( card.sender ) ).first() is not None:
                     process_sender( amount, card )
                 else:
                     process_sender( amount, card, tag=True )
@@ -97,8 +100,7 @@ class DeckState:
                 process_receiver( amount, card )
                 return
             else:
-                process_sender( amount, card, tag=True )
-                process_receiver( amount ,card )
+                ONCE()
                 return
 
 
@@ -163,7 +165,7 @@ class DeckState:
 
             Blocknum.update( { "value": card.blocknum }, synchronize_session='fetch' )
 
-            if card.ctype == "CardIssue" and (self.deck.issuer == card.sender):
+            if (card.ctype == "CardIssue") and (self.deck.issuer == card.sender):
                 self.process_issue( card )
 
             else:
