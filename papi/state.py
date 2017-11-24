@@ -20,13 +20,13 @@ class DeckState:
 
     def counter(self):
 
-        Blocknum = db.session.query(Balance).filter(Balance.id == 'blocknum')
+        Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
 
         if Blocknum.first() is None:
             B = Balance( 'blocknum', 0, self.short_id )
             db.session.add(B)
             db.session.commit()
-            Blocknum = db.session.query(Balance).filter(Balance.id == 'blocknum')
+            Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
         if Blocknum.first() is not None:
             self.cards = self.cards.filter(Card.blocknum >= Blocknum.first().value)
 
@@ -101,7 +101,7 @@ class DeckState:
                 db.session.add(B)
                 db.session.commit()
             else:
-                Receiver = self.balances.fiter(id == card.receiver)
+                Receiver = self.balances.fiter(Balance.account == card.receiver)
                 Receiver.first().update( {'value': Receiver.first().value + card.amount})
 
             Sender = self.balances.filter(Balance.account == card.sender)
