@@ -120,41 +120,49 @@ class DeckState:
         db.session.commit()
         return
 
-    def process_burn(self, card):
+    def process_burn(self, card, amount: int = None):
+
+        if amount is None:
+            amount = card.amount
+
         Receiver = self.balances.filter(Balance.account == 'CardBurn')
         Sender = self.balances.filter(Balance.account == card.sender)
 
         if Receiver.first() is not None:
-            Receiver.first().update( {'value': Receiver.first().value + card.amount}, synchronize_session='fetch' )
+            Receiver.first().update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
         else:
-            B = Balance('CardBurn', card.amount, self.short_id)
+            B = Balance('CardBurn', amount, self.short_id)
             db.session.add(B)
             db.session.commit()
 
-        Sender.first().update( {'value': Sender.first().value - card.amount}, synchronize_session='fetch' )
+        Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
         return
 
-    def process_transaction(self, card):
+    def process_transaction(self, card, amount: int = None):
+
+        if amount is None:
+            amount = card.amount
+
         Sender = self.balances.filter(Balance.account == card.sender)
 
         if Sender.first() is None:
             return
-        if Sender.first().value >= card.amount:
+        if Sender.first().value >= amount:
             Receiver = self.balances.filter(Balance.account == card.receiver)
             if card.ctype == "CardBurn":
                 process_burn(card)
                 return
 
             elif Receiver.first() is None:
-                B = Balance(card.receiver, card.amount, self.short_id)
+                B = Balance(card.receiver, amount, self.short_id)
                 db.session.add(B)
                 db.session.commit()
             else:
                 Receiver = self.balances.fiter(Balance.account == card.receiver)
-                Receiver.first().update( {'value': Receiver.first().value + card.amount}, synchronize_session='fetch' )
+                Receiver.first().update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
 
             Sender = self.balances.filter(Balance.account == card.sender)
-            Sender.first().update( {'value': Sender.first().value - card.amount}, synchronize_session='fetch' )
+            Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
             db.session.commit()
 
         return
@@ -167,7 +175,10 @@ class DeckState:
             Blocknum.update( { "value": card.blocknum }, synchronize_session='fetch' )
 
             if (card.ctype == "CardIssue") and (self.deck.issuer == card.sender):
-                self.process_issue( card )
+                if card.mode not in IntFlag(8):
+                    self.process_issue( card )
+                else:
+                    self.process_issue( card, amount=1)
 
             else:
                 if self.mode in IntFlag(16):
