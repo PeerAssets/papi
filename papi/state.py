@@ -20,57 +20,87 @@ class DeckState:
 
     def counter(self):
 
-        Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
+        Blocknum = self.balances.filter(Balance.account == 'blocknum')
 
         if Blocknum.first() is None:
             B = Balance( 'blocknum', 0, self.short_id )
             db.session.add(B)
             db.session.commit()
-            Blocknum = db.session.query(Balance).filter(Balance.account == 'blocknum')
+            Blocknum = self.balances.filter(Balance.account == 'blocknum')
         if Blocknum.first() is not None:
             self.cards = self.cards.filter(Card.blocknum >= Blocknum.first().value)
 
     def process_issue(self, card):
+        short_id = card.txid[0:10]
 
-        card_id = card.txid[0:10]
+        def ONCE( amount: int = card.amount, repeat=False ):
 
-        def ONCE( amount: int = card.amount ):
-            ''' Create an entry and sets value if issuer id does not exist.'''
+            Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
 
-            Issuer = self.balances.filter( Balance.account.contains( card.sender ) )
+            if Issuer.first() is not None:
+                if not repeat:
+                    ''' Only first occurence of CardIssuance transaction is allowed '''
+                    if Issuer.filter( Balance.account.contains( short_id ) ):
+                        ''' CardIssue is from the first CardIssue txid (There can be multiple with same txid)'''
+                        self.process_sender(amount, card)
+                        self.process_receiver(amount, card)
+                        return
+                else:
+                    self.process_sender(amount, card)
+                    self.process_receiver(amount, card)
+                    return
 
-            if card.sender == self.deck.issuer :
+            else:
+                ''' Create a genesis CardIssue account then process receiver '''
+                B = Balance( card.sender + short_id , -abs(amount), self.short_id)
+                db.session.add(B)
+                db.session.commit()
+                self.process_receiver( amount, card)
 
-                if Issuer.first() is None:
-                    B = Balance( card.sender + card_id , 0, self.short_id)
-                    db.session.add(B)
-                    db.session.commit()
-                    Issuer = self.balances.filter( Balance.account.contains( card_id ) )
+        def process_sender( amount, card, tag = False):
+            ''' Add sender to db if the account doesn't exist and update sender balance ''' 
+            Sender = self.balances.filter( Balance.account == card.sender )
 
-                if Issuer is not None: 
-                    Receiver = self.balances.filter( Balance.account.contains( card.receiver ) )
+            if Sender.first() is not None:
+                Sender.update( {"value" : Sender.first().value  - amount}, synchronize_session='fetch' )
+            
+            if Sender.first() is None:
+                sender = card.sender + short_id * tag
+                B = Balance( sender , -abs(amount), self.short_id)
+                db.session.add(B)
+                db.session.commit()
 
-                    if Receiver.first() is None:
-                        B = Balance( card.receiver , amount, self.short_id)
-                        db.session.add(B)
-                        db.session.commit()
-                        Receiver = self.balances.filter( Balance.account.contains( card.receiver ) )
+        def process_receiver( amount, card):
+            ''' Add receiver to db if the account doesn't exist and update receiver balance ''' 
+            Receiver = self.balances.filter( Balance.account == card.receiver )
 
-                    if Receiver.first() is not None:
-                        Receiver.update( {"value" : Receiver.first().value  + amount} )
-
+            if Receiver.first() is not None:
+                Receiver.update( {"value" : Receiver.first().value  + amount}, synchronize_session='fetch' )
+            
+            if Receiver.first() is None:
+                B = Balance( card.receiver , amount, self.short_id)
+                db.session.add(B)
+                db.session.commit()
 
         def MULTI( amount: int = card.amount ):
             ''' Uses ONCE to create issuer id if it doesn't exist then
                 updates the value by adding new issuance amounts '''
 
-            Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
-            if Issuer.first() is None:
-                ONCE()
-                Issuer = self.balances.filter(Balance.account.contains(self.deck.issuer))
+            Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
+
             if Issuer.first() is not None:
-                Issuer.first().update( {"value" : Balance.value + amount} )
+                if Issuer.filter( Balance.account.contains( short_id ) ).first() is not None:
+                    process_sender( amount, card )
+                else:
+                    process_sender( amount, card, tag=True )
+
+                process_receiver( amount, card )
                 return
+            else:
+                process_sender( amount, card, tag=True )
+                process_receiver( amount ,card )
+                return
+
 
         if self.mode in IntFlag(2):
             ''' ONCE '''
@@ -88,24 +118,22 @@ class DeckState:
         return
 
     def process_transaction(self, card):
-        Sender = self.balances.filter(Balance.account == card.sender)
+        Sender = db.session.query(Balance).filter(Balance.account == card.sender)
 
         if Sender.first() is None:
             return
-        elif Sender.first() is not None:
-            return
-        else:
-            Receiver = self.balances.filter(Balance.account == card.receiver)
+        elif Sender.first().value >= card.amount:
+            Receiver = db.session.query(Balance).filter(Balance.account == card.receiver)
             if Receiver.first() is None:
                 B = Balance(card.receiver, card.amount, self.short_id)
                 db.session.add(B)
                 db.session.commit()
             else:
-                Receiver = self.balances.fiter(Balance.account == card.receiver)
-                Receiver.first().update( {'value': Receiver.first().value + card.amount})
+                Receiver = db.session.query(Balance).fiter(Balance.account == card.receiver)
+                Receiver.first().update( {'value': Receiver.first().value + card.amount}, synchronize_session='fetch' )
 
-            Sender = self.balances.filter(Balance.account == card.sender)
-            Sender.first().update( {'value': Sender.first().value - card.amount})
+            Sender = db.session.query(Balance).filter(Balance.account == card.sender)
+            Sender.first().update( {'value': Sender.first().value - card.amount}, synchronize_session='fetch' )
             db.session.commit()
 
         return
@@ -115,9 +143,9 @@ class DeckState:
 
         for card in self.cards:
 
-            Blocknum.update( { "value": card.blocknum } )
+            Blocknum.update( { "value": card.blocknum }, synchronize_session='fetch' )
 
-            if card.ctype == "CardIssue":
+            if card.ctype == "CardIssue" and (self.deck.issuer == card.sender):
                 self.process_issue( card )
 
             else:
