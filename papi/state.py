@@ -175,7 +175,7 @@ class DeckState:
             Blocknum.update( { "value": card.blocknum }, synchronize_session='fetch' )
 
             if (card.ctype == "CardIssue") and (self.deck.issuer == card.sender):
-                if card.mode not in IntFlag(8):
+                if self.mode not in IntFlag(8):
                     self.process_issue( card )
                 else:
                     self.process_issue( card, amount=1)
