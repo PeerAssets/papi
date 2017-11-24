@@ -1,9 +1,10 @@
 from flask import Flask, jsonify, redirect, url_for
 from sqlalchemy.sql.functions import func
+from conf import db_engine
 from data import *
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///papi.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 def init_db():
@@ -56,14 +57,26 @@ def balances(deck_id):
     balances = []
     Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
-    #for balance in Balances.filter( func.char_length( Balance.account ) == 34 ):
-    for balance in Balances.all():
+    for balance in Balances.filter( func.char_length( Balance.account ) == 34 ):
         balance = balance.__dict__
-        del balance['_sa_instance_state']
-        balances.append(balance)
-        print(balance)
+        balances.append( {"address": balance["account"], "balance": balance["value"]} )
 
     return jsonify( balances )
+
+@app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
+def total(deck_id):
+
+    issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
+    short_id = deck_id[0:10]
+    balances = []
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  ).filter( Balance.account.contains(issuer))
+
+    total = 0
+
+    for balance in Balances.all():
+        balance = balance.__dict__
+        total += balance['value']
+    return jsonify( {'supply': abs(total) } )
 
 if __name__ == '__main__':
     init_db()
