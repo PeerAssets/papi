@@ -1,8 +1,10 @@
-from flask import Flask, jsonify, redirect, url_for
+from flask import Flask, jsonify, redirect, url_for, request
+from sqlalchemy.sql.functions import func
+from conf import db_engine
 from data import *
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///papi.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 def init_db():
@@ -21,7 +23,7 @@ def decks(deck_id):
 
     def get_cards(deck_id):
         cards = []
-        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).all()
+        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
         for card in Cards:
             card = card.__dict__
             del card['_sa_instance_state']
@@ -49,7 +51,37 @@ def decks(deck_id):
 
         return jsonify(decks)
 
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
+def balances(deck_id):
+    short_id = deck_id[0:10]
+    balances = {}
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
+    if request.method == 'POST':
+        Balances = Balances.filter( Balance.account == request.args.get('address') )
+    else:
+        Balances = Balances.filter( func.char_length( Balance.account ) == 34 )
+
+    for balance in Balances:
+        balance = balance.__dict__
+        balances[balance["account"]] =  balance["value"]
+
+    return jsonify( balances )
+
+@app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
+def total(deck_id):
+
+    issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
+    short_id = deck_id[0:10]
+    balances = []
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  ).filter( Balance.account.contains(issuer))
+
+    total = 0
+
+    for balance in Balances.all():
+        balance = balance.__dict__
+        total += balance['value']
+    return jsonify( {'supply': abs(total) } )
 
 if __name__ == '__main__':
     init_db()
