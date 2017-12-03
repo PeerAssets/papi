@@ -2,7 +2,7 @@ from flask import Flask, jsonify, redirect, url_for, request
 from sqlalchemy.sql.functions import func
 from conf import db_engine
 from data import *
-#test
+#vscode winscp test
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
