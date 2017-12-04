@@ -31,46 +31,58 @@ class DeckState:
             self.cards = self.cards.filter(Card.blocknum > Blocknum.first().value)
 
     def process_issue(self, card):
-        short_id = card.txid[0:10]
+        c_short_id = card.txid[0:10]
 
         def ONCE( amount: int = card.amount ):
-
+            ''' Set Issuer object to a query of all accounts containing the deck issuing address '''
             Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
 
             if Issuer.first() is not None:
+                ''' If there exists an entry containing the deck issuing address '''
+
                 if self.mode in IntFlag(2):
-                    ''' Only first occurence of CardIssuance transaction is allowed '''
-                    if Issuer.filter( Balance.account.contains( short_id ) ).first() is not None:
-                        ''' CardIssue is from the first CardIssue txid (There can be multiple with same txid)'''
+                    ''' If issue mode of the deck is ONCE then only first occurence
+                        of CardIssuance transaction is allowed '''
+
+                    if Issuer.filter( Balance.account.contains( c_short_id ) ).first() is not None:
+                        ''' Here we are checking to see if this card is a part of the first issuance transaction
+                            (There can be multiple with same txid)'''
+
                         process_sender(amount, card)
                         process_receiver(amount, card)
                         return
+                    else:
+                        return
                 else:
+                    ''' Continue processing issuance since it does not contain ONCE issue mode'''
+
                     process_sender(amount, card, tag=True)
+                    # Tag set to True ensures that the CardIssue transactions are grouped by c_short_id
                     process_receiver(amount, card)
                     return
 
-            else:
+            elif Issuer.first() is None:
                 ''' Create a genesis CardIssue account then process receiver '''
-                B = Balance( card.sender + short_id , -abs(amount), self.short_id)
-                db.session.add(B)
+                B = Balance( self.deck.issuer + c_short_id , -abs(amount), self.short_id)
                 try:
+                    db.session.add(B)
                     db.session.commit()
                     process_receiver( amount, card)
+                    print('shortid = ' + c_short_id)
                 except IntegrityError:
                     pass
 
-        def process_sender( amount, card, tag = False):
+        def process_sender( amount, card ):
             ''' Add sender to db if the account doesn't exist and update sender balance '''
 
-            Sender = self.balances.filter( Balance.account.contains( card.sender + short_id * tag ) )
+            Sender = self.balances.filter( Balance.account.contains( card.sender + c_short_id) )
 
             if Sender.first() is not None:
+                ''' If there is already an existing address for the sender '''
                 Sender.update( {"value" : Sender.first().value  - abs(amount) }, synchronize_session='fetch' )
             
-            if Sender.first() is None:
-                sender = card.sender + short_id * tag
-                B = Balance( sender , -abs(amount), self.short_id)
+            elif Sender.first() is None:
+                B = Balance( card.sender + c_short_id , -abs(amount), self.short_id)
                 db.session.add(B)
                 db.session.commit()
 
