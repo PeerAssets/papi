@@ -74,14 +74,15 @@ def total(deck_id):
     issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
     short_id = deck_id[0:10]
     balances = []
-    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  ).filter( Balance.account.contains(issuer))
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
+    Issued = Balances.filter( Balance.account.contains(issuer)).filter(func.char_length( Balance.account ) > 34)
+    Accounts = Balances.filter( func.char_length( Balance.account ) == 34)
 
-    total = 0
+    issued = abs( Issued.with_entities(func.sum(Balance.value)).scalar() )
+    total = Accounts.with_entities(func.sum(Balance.value)).scalar()
 
-    for balance in Balances.all():
-        balance = balance.__dict__
-        total += balance['value']
-    return jsonify( {'supply': abs(total) } )
+    if issued == total:
+        return jsonify( {'supply': issued} )
 
 if __name__ == '__main__':
     init_db()
