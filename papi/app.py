@@ -84,6 +84,17 @@ def total(deck_id):
     if issued == total:
         return jsonify( {'supply': issued} )
 
+@app.route('/alert', methods=['POST','GET'])
+def alert():
+    txid = request.values.get('txid')
+    blockhash = request.values.get('blockhash')
+    if txid is not None:
+        deck = which_deck(txid)
+        if deck in subscribed:
+            DeckState(deck)
+    if blockhash is not None:
+        init_decks()
+    return jsonify({'walletnotify': bool(txid), 'blocknotify': bool(blockhash)})
 if __name__ == '__main__':
     init_db()
     init_pa()

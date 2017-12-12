@@ -84,6 +84,13 @@ def init_decks():
             except StopIteration:
                 break
 
+def which_deck(card_id):
+    deck = node.gettransaction(card_id)
+    deck_id = deck["details"][0]["account"]
+    blocknum = node.getblock(deck['blockhash'])["height"]
+    if deck:
+        return {'deck_id':deck_id, 'blocknum': blocknum}
+
 def init_pa():
     init_p2thkeys()
     init_decks()
