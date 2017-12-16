@@ -86,10 +86,14 @@ def init_decks():
 
 def which_deck(card_id):
     deck = node.gettransaction(card_id)
-    deck_id = deck["details"][0]["account"]
+    deck_id = [details['account'] for details in deck['details'] if details['account']][0]
     blocknum = node.getblock(deck['blockhash'])["height"]
     if deck:
         return {'deck_id':deck_id, 'blocknum': blocknum}
+
+def update_state(deck_id):
+    DeckState(deck_id)
+    return
 
 def init_pa():
     init_p2thkeys()

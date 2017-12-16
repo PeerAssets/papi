@@ -43,7 +43,6 @@ def decks(deck_id):
             Decks = db.session.query(Deck).filter(Deck.id.in_(subscribed)).all()
         else:
             Decks = db.session.query(Deck).all()
-        
         for deck in Decks:
             deck = deck.__dict__
             del deck['_sa_instance_state']
@@ -84,7 +83,7 @@ def total(deck_id):
     if issued == total:
         return jsonify( {'supply': issued} )
 
-@app.route('/alert', methods=['POST','GET'])
+@app.route('/alert', methods=['POST'])
 def alert():
     txid = request.values.get('txid')
     blockhash = request.values.get('blockhash')
@@ -95,6 +94,7 @@ def alert():
     if blockhash is not None:
         init_decks()
     return jsonify({'walletnotify': bool(txid), 'blocknotify': bool(blockhash)})
+
 if __name__ == '__main__':
     init_db()
     init_pa()
