@@ -91,8 +91,7 @@ def alert():
         deck = which_deck(txid)['deck_id']
         if deck in subscribed:
             update_state(deck)
-    if blockhash is not None:
-        init_decks()
+
     return jsonify({'walletnotify': bool(txid), 'blocknotify': bool(blockhash)})
 
 if __name__ == '__main__':

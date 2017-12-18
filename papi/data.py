@@ -24,28 +24,28 @@ def init_p2thkeys():
             print(e)
     return print('{} P2TH Key(s) Registered'.format(n))
 
+def add_deck(deck):
+    if deck is not None:
+        entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
+        subscribe = deck.id in subscribed     
+        if not entry:
+            try:
+                D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
+                db.session.add(D)
+                db.session.commit()
+            except Exception as e:
+                print(e)
+                pass
+        else:
+            db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
+            db.session.commit()
+
 def init_decks():
     n = 0
 
     def message(n):
         sys.stdout.flush()
         sys.stdout.write('{} Decks Loaded\r'.format(n))
-
-    def add_deck(deck):
-        if deck is not None:
-            entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
-            subscribe = deck.id in subscribed     
-            if not entry:
-                try:
-                    D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
-                    db.session.add(D)
-                    db.session.commit()
-                except Exception as e:
-                    print(e)
-                    pass
-            else:
-                db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
-                db.session.commit()
 
     def add_cards(cards):
         if cards is not None:
@@ -84,10 +84,20 @@ def init_decks():
             except StopIteration:
                 break
 
+def update_decks(deck_id):
+    try:
+        deck = pa.find_deck(node,txid,version)
+        add_deck(deck)
+    except:
+        pass
+
 def which_deck(card_id):
     deck = node.gettransaction(card_id)
-    deck_id = [details['account'] for details in deck['details'] if details['account']][0]
+    deck_id = [details['account'] for details in deck['details'] if details['account'] ][0]
     blocknum = node.getblock(deck['blockhash'])["height"]
+    if details['account'] == 'PAPROD':
+        update_decks(deck_id)
+
     if deck:
         return {'deck_id':deck_id, 'blocknum': blocknum}
 
