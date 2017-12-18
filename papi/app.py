@@ -86,13 +86,12 @@ def total(deck_id):
 @app.route('/alert', methods=['POST'])
 def alert():
     txid = request.values.get('txid')
-    blockhash = request.values.get('blockhash')
     if txid is not None:
         deck = which_deck(txid)['deck_id']
         if deck in subscribed:
             update_state(deck)
 
-    return jsonify({'walletnotify': bool(txid), 'blocknotify': bool(blockhash)})
+    return jsonify({'walletnotify': bool(txid)})
 
 if __name__ == '__main__':
     init_db()

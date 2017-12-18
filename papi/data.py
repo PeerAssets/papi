@@ -40,26 +40,26 @@ def add_deck(deck):
             db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
             db.session.commit()
 
+def add_cards(cards):
+    if cards is not None:
+        for cardset in cards:
+            for card in cardset:
+                sys.stdout.write(card.txid +'\r')
+                sys.stdout.flush()
+                card_id = card.txid + str(card.blockseq) + str(card.cardseq)
+                entry = db.session.query(Card).filter(Card.id == card_id).first()   
+                if not entry:
+                    C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
+                    db.session.add(C)
+                db.session.commit()
+        sys.stdout.flush()
+
 def init_decks():
     n = 0
 
     def message(n):
         sys.stdout.flush()
         sys.stdout.write('{} Decks Loaded\r'.format(n))
-
-    def add_cards(cards):
-        if cards is not None:
-            for cardset in cards:
-                for card in cardset:
-                    sys.stdout.write(card.txid +'\r')
-                    sys.stdout.flush()
-                    card_id = card.txid + str(card.blockseq) + str(card.cardseq)
-                    entry = db.session.query(Card).filter(Card.id == card_id).first()   
-                    if not entry:
-                        C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
-                        db.session.add(C)
-                    db.session.commit()
-            sys.stdout.flush()
 
     if not autoload:
         decks = [pa.find_deck(node,txid,version) for txid in subscribed]
@@ -84,22 +84,24 @@ def init_decks():
             except StopIteration:
                 break
 
-def update_decks(deck_id):
-    try:
-        deck = pa.find_deck(node,txid,version)
-        add_deck(deck)
-    except:
-        pass
+def update_decks(txid):
+    deck = pa.find_deck(node, txid, version)
+    add_deck(deck)
+    return
 
-def which_deck(card_id):
-    deck = node.gettransaction(card_id)
-    deck_id = [details['account'] for details in deck['details'] if details['account'] ][0]
+def which_deck(txid):
+    deck = node.gettransaction(txid)
+    deck_id = [details['account'] for details in deck['details'] if details['account']][0]
     blocknum = node.getblock(deck['blockhash'])["height"]
-    if details['account'] == 'PAPROD':
-        update_decks(deck_id)
-
-    if deck:
-        return {'deck_id':deck_id, 'blocknum': blocknum}
+    if deck_id:
+        if deck_id in ('PAPROD','PATEST'):
+            update_decks(txid)
+        elif deck_id in subscribed:
+            deck = pa.find_deck(node, deck_id, version)
+            add_cards( pa.find_card_transfers(node, deck) )
+        return {'deck_id':txid, 'blocknum': blocknum}
+    else:
+        return
 
 def update_state(deck_id):
     DeckState(deck_id)
