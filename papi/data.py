@@ -92,14 +92,14 @@ def update_decks(txid):
 def which_deck(txid):
     deck = node.gettransaction(txid)
     deck_id = [details['account'] for details in deck['details'] if details['account']][0]
-    blocknum = node.getblock(deck['blockhash'])["height"]
     if deck_id:
         if deck_id in ('PAPROD','PATEST'):
             update_decks(txid)
         elif deck_id in subscribed:
             deck = pa.find_deck(node, deck_id, version)
             add_cards( pa.find_card_transfers(node, deck) )
-        return {'deck_id':txid, 'blocknum': blocknum}
+            DeckState(deck_id)
+        return {'deck_id':txid}
     else:
         return
 
