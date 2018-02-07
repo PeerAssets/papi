@@ -21,6 +21,11 @@ def index():
 def decks(deck_id):
     deck = None
 
+    if deck_id is not None:
+        if sanitize(deck_id, 'hex') is False:
+            error = "{'Error': invalid deck_id }"
+            return jsonify(error)
+
     def get_cards(deck_id):
         cards = []
         Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
@@ -52,6 +57,11 @@ def decks(deck_id):
 
 @app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
 def balances(deck_id):
+
+    if sanitize(deck_id, 'hex') is False:
+        error = "{'Error': invalid deck_id }"
+        return jsonify(error)
+
     short_id = deck_id[0:10]
     balances = {}
     Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
@@ -69,6 +79,10 @@ def balances(deck_id):
 
 @app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
 def total(deck_id):
+
+    if sanitize(deck_id, 'hex') is False:
+        error = "{'Error': invalid deck_id }"
+        return jsonify(error)
 
     issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
     short_id = deck_id[0:10]

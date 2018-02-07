@@ -7,6 +7,28 @@ import sys
 
 node = pa.RpcNode(testnet=testnet)
 
+def sanitize(input, base):
+    length_check = len(str(input))
+
+    if base == 'hex':
+        if length_check == 64:
+            try:
+                int(input, 16) #if not hex, will fail test
+                return True
+            except:
+                return False
+        else:
+            return False
+    elif base == 'base58':
+        if length_check == 34:
+            try:
+                b58decode(str(input)) #if not base58, will fail test
+                return True
+            except:
+                return False
+        else:
+            return False
+
 def init_p2thkeys():
 
     from binascii import unhexlify
