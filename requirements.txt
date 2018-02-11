@@ -1,4 +1,6 @@
 flask
 sqlalchemy
+flask_sqlalchemy
 peercoin_rpc
 -e git://github.com/PeerAssets/pypeerassets@master#egg=pypeerassets
+-e git://github.com/PeerAssets/btcpy@master#egg=btcpy
