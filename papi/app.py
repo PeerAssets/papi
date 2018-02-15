@@ -2,15 +2,12 @@ from flask import Flask, jsonify, redirect, url_for, request
 from sqlalchemy.sql.functions import func
 from conf import db_engine
 from data import *
+from models import db, init_db
+from restless  import init_restless
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-def init_db():
-    db.init_app(app)
-    db.app = app
-    db.create_all()
 
 @app.route('/')
 def index():
@@ -94,6 +91,7 @@ def alert():
     return jsonify({'walletnotify': bool(txid)})
 
 if __name__ == '__main__':
-    init_db()
+    init_db(app)
+    init_restless(app)
     init_pa()
     app.run(host='0.0.0.0',port=5555)

@@ -1,7 +1,6 @@
-from app import app
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 class Deck(db.Model):
     """"""
@@ -65,3 +64,9 @@ class Balance(db.Model):
         self.account = account
         self.value = value
         self.short_id = short_id
+
+
+def init_db(app):
+    db.init_app(app)
+    db.app = app
+    db.create_all()

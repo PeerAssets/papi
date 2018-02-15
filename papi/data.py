@@ -72,10 +72,10 @@ def init_decks():
                 message(n)
 
     else:
-        decks = pa.find_all_valid_decks(node, 1 , True)
+        decks = pa.find_all_valid_decks(node, 1, True)
         while True:
             try: 
-                deck = next(decks)
+                deck = next( decks )
                 add_deck( deck )
                 if deck.id in subscribed:
                     add_cards( pa.find_card_transfers(node, deck ) )
@@ -112,6 +112,6 @@ def init_pa():
     init_decks()
     init_state()
 
-
     sys.stdout.write('PeerAssets version {} Initialized'.format(version))
     sys.stdout.flush()
+

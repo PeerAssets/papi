@@ -21,8 +21,7 @@ parts/
 sdist/
 var/
 *.egg-info/
-.installed.cfg
-*.egg
+.installed.cfg *.egg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -90,3 +89,5 @@ ENV/
 
 # mypy
 .mypy_cache
+
+papi.db
