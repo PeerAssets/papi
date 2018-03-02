@@ -5,13 +5,13 @@ from conf import db_engine
 from data import *
 from models import db, init_db
 from restless  import init_restless
-
-
+import pypeerassets as pa
 
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 @app.route('/')
 def index():

@@ -5,7 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
-node = pa.RpcNode(testnet=testnet)
+node = pa.RpcNode(testnet=testnet, ip=rpc_host, port=rpc_port)
+
 
 def init_p2thkeys():
 
