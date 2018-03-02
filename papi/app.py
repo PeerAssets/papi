@@ -1,14 +1,17 @@
-from flask import Flask, jsonify, redirect, url_for
+from flask import Flask, jsonify, redirect, url_for, request
+from flask_cors import CORS
+from sqlalchemy.sql.functions import func
+from conf import db_engine
 from data import *
+from models import db, init_db
+from restless  import init_restless
+import pypeerassets as pa
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///papi.db'
+CORS(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-def init_db():
-    db.init_app(app)
-    db.app = app
-    db.create_all()
 
 @app.route('/')
 def index():
@@ -21,7 +24,7 @@ def decks(deck_id):
 
     def get_cards(deck_id):
         cards = []
-        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).all()
+        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
         for card in Cards:
             card = card.__dict__
             del card['_sa_instance_state']
@@ -41,7 +44,6 @@ def decks(deck_id):
             Decks = db.session.query(Deck).filter(Deck.id.in_(subscribed)).all()
         else:
             Decks = db.session.query(Deck).all()
-        
         for deck in Decks:
             deck = deck.__dict__
             del deck['_sa_instance_state']
@@ -49,9 +51,51 @@ def decks(deck_id):
 
         return jsonify(decks)
 
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
+def balances(deck_id):
+    short_id = deck_id[0:10]
+    balances = {}
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
+    if request.method == 'POST':
+        Balances = Balances.filter( Balance.account == request.args.get('address') )
+    else:
+        Balances = Balances.filter( func.char_length( Balance.account ) == 34 )
+
+    for balance in Balances:
+        balance = balance.__dict__
+        balances[balance["account"]] =  balance["value"]
+
+    return jsonify( balances )
+
+@app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
+def total(deck_id):
+
+    issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
+    short_id = deck_id[0:10]
+    balances = []
+    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
+    Issued = Balances.filter( Balance.account.contains(issuer)).filter(func.char_length( Balance.account ) > 34)
+    Accounts = Balances.filter( func.char_length( Balance.account ) == 34)
+
+    issued = abs( Issued.with_entities(func.sum(Balance.value)).scalar() )
+    total = Accounts.with_entities(func.sum(Balance.value)).scalar()
+
+    if issued == total:
+        return jsonify( {'supply': issued} )
+
+@app.route('/alert', methods=['POST'])
+def alert():
+    txid = request.values.get('txid')
+    if txid is not None:
+        deck = which_deck(txid)['deck_id']
+        if deck in subscribed:
+            update_state(deck)
+
+    return jsonify({'walletnotify': bool(txid)})
 
 if __name__ == '__main__':
-    init_db()
+    init_db(app)
+    init_restless(app)
     init_pa()
     app.run(host='0.0.0.0',port=5555)

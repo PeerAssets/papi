@@ -1,7 +1,6 @@
-from app import app
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 class Deck(db.Model):
     """"""
@@ -35,7 +34,7 @@ class Card(db.Model):
     ctype = db.Column(db.String)
     blocknum = db.Column(db.Integer)
     blockseq = db.Column(db.Integer)
-    deck_id = db.Column(db.Integer)
+    deck_id = db.Column(db.String)
     
     #----------------------------------------------------------------------
     def __init__(self, id, txid, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id):
@@ -50,3 +49,24 @@ class Card(db.Model):
         self.blocknum = blocknum
         self.blockseq = blockseq
         self.deck_id = deck_id
+
+class Balance(db.Model):
+    """"""
+    __tablename__ = 'balances' 
+    id = db.Column(db.Integer,primary_key=True, unique=True)
+    account = db.Column(db.String)
+    value = db.Column(db.Integer)
+    short_id = db.Column(db.String)
+
+    #----------------------------------------------------------------------
+    def __init__(self, account, value, short_id):
+        """"""
+        self.account = account
+        self.value = value
+        self.short_id = short_id
+
+
+def init_db(app):
+    db.init_app(app)
+    db.app = app
+    db.create_all()
