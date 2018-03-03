@@ -14,6 +14,10 @@ version = getenv('PA_VERSION', 1)
 rpc_host = getenv('RPC_HOST', 'localhost')
 # port of the peercoin node
 rpc_port = getenv('RCP_PORT', '9904')
+# username for rpc connection
+rpc_username = getenv('RCP_USER', None)
+# password for the rpc_connection
+rpc_password = getenv('RPC_PASS', None)
 # subscribed deck list
 # Use '*' inside the list to subscribe to all decks or use deck id's to subscribe to specified decks only
 subscribed = ['*']
