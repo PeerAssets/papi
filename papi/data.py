@@ -18,7 +18,12 @@ def init_p2thkeys():
 def add_deck(deck):
     if deck is not None:
         entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
-        subscribe = deck.id in subscribed     
+        if '*' in subscribed:
+            subscribe = True
+        else:
+            subscribe = deck.id in subscribed
+        
+
         if not entry:
             try:
                 D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
