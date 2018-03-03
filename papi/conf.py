@@ -15,4 +15,5 @@ rpc_host = getenv('RPC_HOST', 'localhost')
 # port of the peercoin node
 rpc_port = getenv('RCP_PORT', '9904')
 # subscribed deck list
-subscribed = ['b6a95f94fef093ee9009b04a09ecb9cb5cba20ab6f13fe0926aeb27b8671df43']
+# Use '*' inside the list to subscribe to all decks or use deck id's to subscribe to specified decks only
+subscribed = ['*']

@@ -9,21 +9,10 @@ node = pa.RpcNode(testnet=testnet, ip=rpc_host, port=rpc_port)
 
 
 def init_p2thkeys():
-
-    from binascii import unhexlify
     n = 0
 
     if autoload:
         pa.pautils.load_p2th_privkey_into_local_node(node,production)
-
-    for deck_id in subscribed:
-        wif = pa.Kutil(privkey=unhexlify(deck_id), network=node.network).wif
-        try:
-            node.importprivkey(wif,deck_id)
-            n += 1
-        except Exception as e:
-            print(e)
-    return print('{} P2TH Key(s) Registered'.format(n))
 
 def add_deck(deck):
     if deck is not None:
@@ -45,17 +34,20 @@ def add_cards(cards):
     if cards is not None:
         for cardset in cards:
             for card in cardset:
-                sys.stdout.write(card.txid +'\r')
-                sys.stdout.flush()
                 card_id = card.txid + str(card.blockseq) + str(card.cardseq)
                 entry = db.session.query(Card).filter(Card.id == card_id).first()   
                 if not entry:
                     C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
                     db.session.add(C)
                 db.session.commit()
-        sys.stdout.flush()
+
+def load_key(deck_id):
+    from binascii import unhexlify
+    wif = pa.Kutil(privkey=unhexlify(deck_id), network=node.network).wif
+    node.importprivkey(wif,deck_id)
 
 def init_decks():
+    accounts = node.listaccounts()
     n = 0
 
     def message(n):
@@ -67,8 +59,15 @@ def init_decks():
 
         for deck in decks:
             if deck is not None:
+                if deck.id not in accounts:
+                    load_key(deck.id)
                 add_deck(deck)
-                add_cards( pa.find_card_transfers(node, deck) )
+                try:
+                    add_cards( pa.find_card_transfers(node, deck) )
+                except:
+                    continue
+
+                init_state(deck.id)
                 n += 1
                 message(n)
 
@@ -78,8 +77,17 @@ def init_decks():
             try: 
                 deck = next( decks )
                 add_deck( deck )
-                if deck.id in subscribed:
-                    add_cards( pa.find_card_transfers(node, deck ) )
+                if deck.id not in accounts:
+                    load_key(deck.id)
+                try:
+                    if '*' in subscribed:
+                        add_cards( pa.find_card_transfers( node, deck ) )
+                    elif deck.id in subscribed:
+                        add_cards( pa.find_card_transfers( node, deck ) )
+                except:
+                    continue
+
+                init_state(deck.id)
                 n += 1
                 message(n)
             except StopIteration:
@@ -111,7 +119,6 @@ def update_state(deck_id):
 def init_pa():
     init_p2thkeys()
     init_decks()
-    init_state()
 
     sys.stdout.write('PeerAssets version {} Initialized'.format(version))
     sys.stdout.flush()

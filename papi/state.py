@@ -203,7 +203,10 @@ class DeckState:
                 else:
                     process_transaction(card)
 
-def init_state():
-    for deck_id in subscribed:
+def init_state(deck_id):
+    try:
         DeckState(deck_id)
+    except Exception as e:
+        print(e)
+        pass
     return
