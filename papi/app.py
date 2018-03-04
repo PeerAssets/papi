@@ -24,7 +24,18 @@ def decks(deck_id):
 
     def get_cards(deck_id):
         cards = []
-        Cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
+        Cards = db.session.query(Card).filter(Card.deck_id == deck_id)
+        
+        if request.values.get('address'):
+            address = request.values.get('address')
+            Cards = Cards.filter( (Card.receiver == address) | (Card.sender == address) )
+        
+        if request.values.get('valid'):
+            valid = request.values.get('valid')
+            Cards = Cards.filter( Card.valid == valid )
+
+        Cards = Cards.order_by(Card.blocknum,Card.blockseq,Card.cardseq).all()
+
         for card in Cards:
             card = card.__dict__
             del card['_sa_instance_state']
@@ -51,13 +62,13 @@ def decks(deck_id):
 
         return jsonify(decks)
 
-@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
 def balances(deck_id):
     short_id = deck_id[0:10]
     balances = {}
     Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
-    if request.method == 'POST':
+    if request.method == 'GET':
         Balances = Balances.filter( Balance.account == request.args.get('address') )
     else:
         Balances = Balances.filter( func.char_length( Balance.account ) == 34 )
