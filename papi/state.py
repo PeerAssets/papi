@@ -50,6 +50,9 @@ class DeckState:
 
                         process_sender(amount, card)
                         process_receiver(amount, card)
+                        _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                        _card.valid = True
+                        db.session.commit()
                         return
                     else:
                         return
@@ -59,6 +62,9 @@ class DeckState:
                     process_sender(amount, card, tag=True)
                     # Tag set to True ensures that the CardIssue transactions are grouped by c_short_id
                     process_receiver(amount, card)
+                    _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                    _card.valid = True
+                    db.session.commit()
                     return
 
             elif Issuer.first() is None:
@@ -68,8 +74,11 @@ class DeckState:
                     db.session.add(B)
                     db.session.commit()
                     process_receiver( amount, card)
-                    print('shortid = ' + c_short_id)
-                except IntegrityError:
+                    _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                    _card.valid = True
+                    db.session.commit()
+                except Exception as e:
+                    print(e+'\r')
                     pass
 
         def process_sender( amount, card ):
@@ -111,6 +120,9 @@ class DeckState:
                     process_sender( amount, card, tag=True )
 
                 process_receiver( amount, card )
+                _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                _card.valid = True
+                db.session.commit()
                 return
             else:
                 ONCE()
@@ -176,7 +188,6 @@ class DeckState:
             Sender = self.balances.filter(Balance.account == card.sender)
             Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
             db.session.commit()
-
         return
 
     def process_cards(self):

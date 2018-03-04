@@ -43,7 +43,7 @@ def add_cards(cards):
                 card_id = card.txid + str(card.blockseq) + str(card.cardseq)
                 entry = db.session.query(Card).filter(Card.id == card_id).first()   
                 if not entry:
-                    C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id )
+                    C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False )
                     db.session.add(C)
                 db.session.commit()
 
@@ -128,4 +128,3 @@ def init_pa():
 
     sys.stdout.write('PeerAssets version {} Initialized'.format(version))
     sys.stdout.flush()
-

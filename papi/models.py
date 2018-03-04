@@ -35,9 +35,10 @@ class Card(db.Model):
     blocknum = db.Column(db.Integer)
     blockseq = db.Column(db.Integer)
     deck_id = db.Column(db.String)
+    valid = db.Column(db.Boolean)
     
     #----------------------------------------------------------------------
-    def __init__(self, id, txid, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id):
+    def __init__(self, id, txid, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
         """"""
         self.id = id
         self.txid = txid
@@ -49,6 +50,7 @@ class Card(db.Model):
         self.blocknum = blocknum
         self.blockseq = blockseq
         self.deck_id = deck_id
+        self.valid = valid
 
 class Balance(db.Model):
     """"""
