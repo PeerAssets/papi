@@ -1,22 +1,29 @@
-FROM debian:stable-slim
+FROM python:3-alpine3.7
 
-LABEL maintainer.0="Peerchemist (@peerchemist)"
+ENV USERNAME=peerassets \
+    APP_DIRECTORY=/usr/src/app
 
-RUN apt-get update -y && \
-    apt-get install -y python3-pip python3-dev git
+RUN addgroup -S ${USERNAME} \
+    && adduser -D -H -S -s /bin/false -u 1000 -G ${USERNAME} ${USERNAME} \
+    && apk add --update \
+        git \
+    && rm -rf /var/cache/apk/* \
+    && mkdir -p /home/${USERNAME}/.ppcoin \
+    && touch /home/${USERNAME}/.ppcoin/ppcoin.conf
 
-# We copy just the requirements.txt first to leverage Docker cache
-COPY ./requirements.txt /app/requirements.txt
+COPY requirements.txt ${APP_DIRECTORY}/
 
-WORKDIR /app
+WORKDIR ${APP_DIRECTORY}
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY papi/* /app
+COPY papi/ ${APP_DIRECTORY}/
 
-ENTRYPOINT [ "python3" ]
+RUN chown -R ${USERNAME}:${USERNAME} ${APP_DIRECTORY} \
+    && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.ppcoin
 
-CMD [ "app.py" ]
+USER ${USERNAME}
 
-## expose port
 EXPOSE 5555
+
+ENTRYPOINT [ "python3", "app.py"]
