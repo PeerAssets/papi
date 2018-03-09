@@ -1,7 +1,7 @@
 FROM python:3-alpine3.7
 
-ENV USERNAME=peerassets
-    #APP_DIRECTORY=/usr/src/app
+ENV USERNAME=papi \
+    APP_DIRECTORY=/usr/src/app
 
 RUN addgroup -S ${USERNAME} \
     && adduser -D -H -S -s /bin/false -u 1000 -G ${USERNAME} ${USERNAME} \
