@@ -1,6 +1,7 @@
-from enum import IntFlag
 from data import *
 from conf import subscribed
+from pypeerassets.protocol import IssueMode
+
 
 class DeckState:
 
@@ -8,7 +9,7 @@ class DeckState:
 
         self.deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
         self.short_id = deck_id[0:10]
-        self.mode = IntFlag(self.deck.issue_mode)
+        self.mode = IssueMode(self.deck.issue_mode)
         self.issuer = self.deck.issuer
         self.cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq)
         self.counter()
@@ -40,7 +41,7 @@ class DeckState:
             if Issuer.first() is not None:
                 ''' If there exists an entry containing the deck issuing address '''
 
-                if self.mode in IntFlag(2):
+                if self.mode in IssueMode(2):
                     ''' If issue mode of the deck is ONCE then only first occurence
                         of CardIssuance transaction is allowed '''
 
@@ -89,7 +90,7 @@ class DeckState:
             if Sender.first() is not None:
                 ''' If there is already an existing address for the sender '''
                 Sender.update( {"value" : Sender.first().value  - abs(amount) }, synchronize_session='fetch' )
-            
+
             elif Sender.first() is None:
                 B = Balance( card.sender + c_short_id , -abs(amount), self.short_id)
                 db.session.add(B)
@@ -129,15 +130,15 @@ class DeckState:
                 return
 
 
-        if self.mode in IntFlag(2):
+        if self.mode in IssueMode(2):
             ''' ONCE '''
             ONCE()
                 
-        elif self.mode in IntFlag(4):
+        elif self.mode in IssueMode(4):
             ''' MULTI '''
             MULTI()
 
-        elif self.mode in IntFlag(8):
+        elif self.mode in IssueMode(8):
             ''' MONO '''
             MULTI(amount=1)
 
@@ -198,17 +199,17 @@ class DeckState:
             Blocknum.update( { "value": card.blocknum }, synchronize_session='fetch' )
 
             if (card.ctype == "CardIssue") and (self.deck.issuer == card.sender):
-                if self.mode not in IntFlag(8):
+                if self.mode not in IssueMode(8):
                     self.process_issue( card )
                 else:
                     self.process_issue( card, amount=1)
 
             else:
-                if self.mode in IntFlag(16):
+                if self.mode in IssueMode(16):
                     if ( card.sender == self.deck.issuer ):
                         process_transaction(card)
 
-                elif self.mode in IntFlag(52):
+                elif self.mode in IssueMode(52):
                     pass # Need to include blocktime into db per card
                 
                 else:
