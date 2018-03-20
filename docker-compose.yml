@@ -1,0 +1,38 @@
+version: '2'
+services:
+  db:
+    restart: always
+    image: sameersbn/postgresql:9.6-2
+    ports:
+      - "5432:5432"
+    environment:
+      - DEBUG=false
+
+      - DB_USER=papi
+      - DB_PASS=papimon
+      - DB_NAME=papi
+      - DB_TEMPLATE=
+
+      - DB_EXTENSION=
+
+      - REPLICATION_MODE=
+      - REPLICATION_USER=
+      - REPLICATION_PASS=
+      - REPLICATION_SSLMODE=
+    volumes:
+      - /var/lib/papi/data:/var/lib/postgresql/data
+  papi:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DB="postgresql://papi:papimon@db:5432/""
+      - PA_TESTNET=true
+      - PA_PRODUCTION=true
+      - AUTOLOAD=true
+      - PA_VERSION=true
+      - RPC_HOST=db
+      - RCP_PORT=
+      - RCP_USER=
+      - RPC_PASS=
+    entrypoint: ["python3", "app.py"]
