@@ -21,6 +21,8 @@ RUN chown -R ${USERNAME}:${USERNAME} ${APP_DIRECTORY}
 
 USER ${USERNAME}
 
+ENV APP_ENV=docker
+
 EXPOSE 5555
 
 ENTRYPOINT [ "python3", "app.py"]
