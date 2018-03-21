@@ -17,7 +17,7 @@ rpc_port = environ.get('RCP_PORT', '9904')
 # username for rpc connection
 rpc_username = environ.get('RCP_USER', None)
 # password for the rpc_connection
-rpc_password = environ.get('RPC_PASS', None)
+rpc_password = environ.get('RPC_PASSWORD', None)
 # subscribed deck list
 # Use '*' inside the list to subscribe to all decks or use deck id's to subscribe to specified decks only
 subscribed = ['*']
