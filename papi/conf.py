@@ -15,7 +15,7 @@ rpc_host = environ.get('RPC_HOST', 'localhost')
 # port of the peercoin node
 rpc_port = environ.get('RCP_PORT', '9904')
 # username for rpc connection
-rpc_username = environ.get('RCP_USER', None)
+rpc_username = environ.get('RCP_USERNAME', None)
 # password for the rpc_connection
 rpc_password = environ.get('RPC_PASSWORD', None)
 # subscribed deck list
