@@ -62,13 +62,13 @@ def decks(deck_id):
 
         return jsonify(decks)
 
-@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET'])
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
 def balances(deck_id):
     short_id = deck_id[0:10]
     balances = {}
     Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
 
-    if request.method == 'GET':
+    if request.args.get('address'):
         Balances = Balances.filter( Balance.account == request.args.get('address') )
     else:
         Balances = Balances.filter( func.char_length( Balance.account ) == 34 )
