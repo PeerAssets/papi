@@ -1,6 +1,6 @@
 # papi
 ### PeerAssets API
-*Requires Python 3.6+ and pypeerassets*
+*Requires Python 3.4+ and pypeerassets*
 
 ## Dependencies:
 ```
@@ -32,6 +32,6 @@ python app.py
 ```
 This will create the local sqlite database file named *papi.db*
     
+## running in docker
 
-
-
+`docker-compose up`
