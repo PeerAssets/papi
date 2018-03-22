@@ -20,13 +20,11 @@ services:
       - PA_TESTNET=true
       - PA_PRODUCTION=true
       - AUTOLOAD=true
-      - PA_VERSION=true
+      - PA_VERSION=1
       - RPC_HOST=peercoind
-      - RCP_PORT=9904
-      - RCP_USERNAME=papi
+      - RPC_PORT=9904
+      - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
     volumes:
       - /usr/src/app/:/var/lib/papi/
-    entrypoint: ["python3", "app.py"]
-    links:
-      - peercoind
+    command: ["./wait-for-it.sh", "peercoind:9904", "--", "python3", "app.py"]
