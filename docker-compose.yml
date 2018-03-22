@@ -1,38 +1,32 @@
 version: '2'
 services:
-  db:
+  peercoind:
     restart: always
-    image: sameersbn/postgresql:9.6-2
+    image: peerchemist/peercoind
     ports:
-      - "5432:5432"
+      - "9904:9904"
     environment:
-      - DEBUG=false
-
-      - DB_USER=papi
-      - DB_PASS=papimon
-      - DB_NAME=papi
-      - DB_TEMPLATE=
-
-      - DB_EXTENSION=
-
-      - REPLICATION_MODE=
-      - REPLICATION_USER=
-      - REPLICATION_PASS=
-      - REPLICATION_SSLMODE=
-    volumes:
-      - /var/lib/papi/data:/var/lib/postgresql/data
+      - RPC_USER=papi
+      - RPC_PASSWORD=papipass
+    command:
+      -testnet
+      -rpcallowip=*
   papi:
+    restart: always
     build: .
     depends_on:
-      - db
+      - peercoind
     environment:
-      - DB="postgresql://papi:papimon@db:5432/""
       - PA_TESTNET=true
       - PA_PRODUCTION=true
       - AUTOLOAD=true
       - PA_VERSION=true
-      - RPC_HOST=db
-      - RCP_PORT=
-      - RCP_USER=
-      - RPC_PASS=
+      - RPC_HOST=peercoind
+      - RCP_PORT=9904
+      - RCP_USERNAME=papi
+      - RPC_PASSWORD=papipass
+    volumes:
+      - /usr/src/app/:/var/lib/papi/
     entrypoint: ["python3", "app.py"]
+    links:
+      - peercoind
