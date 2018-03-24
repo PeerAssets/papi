@@ -31,7 +31,7 @@ pip install flask, flask-sqlalchemy
 python app.py
 ```
 This will create the local sqlite database file named *papi.db*
-    
+
 ## running in docker
 
-`docker-compose up`
+`docker-compose up -d`
