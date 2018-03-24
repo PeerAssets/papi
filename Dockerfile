@@ -23,6 +23,8 @@ USER ${USERNAME}
 
 ENV APP_ENV=docker
 
+VOLUME /var/lib/papi/
+
 EXPOSE 5555
 
 ENTRYPOINT [ "python3", "app.py"]
