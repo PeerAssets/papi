@@ -1,0 +1,13 @@
+[Unit]
+Description=Example papi service
+After=syslog.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/%u/papi/papi
+ExecStart=/usr/local/bin/python3 /home/%u/papi/papi/app.py
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
