@@ -26,7 +26,7 @@ class Card(db.Model):
     """"""
     __tablename__ = "cards"
     id = db.Column(db.String, primary_key=True, unique=True) #concatenate txid + blockseq + cardseq
-    txid = db.Column(db.String)
+    blockhash = db.Column(db.String)
     cardseq = db.Column(db.Integer)
     receiver = db.Column(db.String)
     sender = db.Column(db.String)
@@ -38,10 +38,10 @@ class Card(db.Model):
     valid = db.Column(db.Boolean)
     
     #----------------------------------------------------------------------
-    def __init__(self, id, txid, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
+    def __init__(self, id, blockhash, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
         """"""
         self.id = id
-        self.txid = txid
+        self.blockhash = blockhash
         self.cardseq = cardseq
         self.receiver = receiver
         self.sender = sender
@@ -59,14 +59,14 @@ class Balance(db.Model):
     account = db.Column(db.String)
     value = db.Column(db.Integer)
     short_id = db.Column(db.String)
-
+    checkpoint = db.Column(db.String)
     #----------------------------------------------------------------------
-    def __init__(self, account, value, short_id):
+    def __init__(self, account, value, short_id, checkpoint):
         """"""
         self.account = account
         self.value = value
         self.short_id = short_id
-
+        self.checkpoint = checkpoint
 
 def init_db(app):
     db.init_app(app)

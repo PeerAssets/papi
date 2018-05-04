@@ -29,7 +29,7 @@ def add_deck(deck):
 
         if not entry:
             try:
-                D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe )
+                D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe)
                 db.session.add(D)
                 db.session.commit()
             except Exception as e:
@@ -46,7 +46,7 @@ def add_cards(cards):
                 card_id = card.txid + str(card.blockseq) + str(card.cardseq)
                 entry = db.session.query(Card).filter(Card.id == card_id).first()   
                 if not entry:
-                    C = Card( card_id, card.txid, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False )
+                    C = Card( card_id, card.blockhash, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False )
                     db.session.add(C)
                 db.session.commit()
 
@@ -72,11 +72,11 @@ def init_decks():
                     load_key(deck.id)
                 add_deck(deck)
                 try:
-                    add_cards( pa.find_card_transfers(node, deck) )
+                    if not checkpoint(deck.id):
+                        add_cards( pa.find_card_transfers(node, deck) )
+                        init_state(deck.id)
                 except:
                     continue
-
-                init_state(deck.id)
                 n += 1
                 message(n)
 
@@ -88,17 +88,17 @@ def init_decks():
                 add_deck( deck )
                 if deck.id not in accounts:
                     load_key(deck.id)
-                try:
-                    if '*' in subscribed:
-                        add_cards( pa.find_card_transfers( node, deck ) )
-                    elif deck.id in subscribed:
-                        add_cards( pa.find_card_transfers( node, deck ) )
-                except:
-                    continue
-
-                init_state(deck.id)
-                n += 1
-                message(n)
+                if not checkpoint(deck.id):
+                    try:
+                        if '*' in subscribed:
+                            add_cards( pa.find_card_transfers( node, deck ) )
+                        elif deck.id in subscribed:
+                            add_cards( pa.find_card_transfers( node, deck ) )
+                    except:
+                        continue
+                    init_state(deck.id)
+                    n += 1
+                    message(n)
             except StopIteration:
                 break
 
@@ -115,15 +115,31 @@ def which_deck(txid):
             update_decks(txid)
         elif deck_id in subscribed:
             deck = pa.find_deck(node, deck_id, version)
-            add_cards( pa.find_card_transfers(node, deck) )
-            DeckState(deck_id)
+            if not checkpoint(deck_id):
+                add_cards( pa.find_card_transfers(node, deck) )
+                DeckState(deck_id)
         return {'deck_id':txid}
     else:
         return
 
 def update_state(deck_id):
-    DeckState(deck_id)
-    return
+    if not checkpoint(deck_id):
+        DeckState(deck_id)
+        return
+
+def checkpoint(deck_id):
+    checkpoint = node.listtransactions(deck_id)
+
+    if checkpoint:
+        checkpoint = checkpoint[::-1][0]['blockhash']
+        _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum).first()
+
+        if _checkpoint is not None:
+            return True
+        else:
+            return False
+            
+    return False
 
 def init_pa():
     init_p2thkeys()

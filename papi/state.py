@@ -5,7 +5,6 @@ from conf import subscribed
 class DeckState:
 
     def __init__(self, deck_id: str):
-
         self.deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
         self.short_id = deck_id[0:10]
         self.mode = IssueMode(self.deck.issue_mode).name
@@ -23,7 +22,7 @@ class DeckState:
         Blocknum = self.balances.filter(Balance.account == 'blocknum')
 
         if Blocknum.first() is None:
-            B = Balance( 'blocknum', 0, self.short_id )
+            B = Balance( 'blocknum', 0, self.short_id, '' )
             db.session.add(B)
             db.session.commit()
             Blocknum = self.balances.filter(Balance.account == 'blocknum')
@@ -31,7 +30,7 @@ class DeckState:
             self.cards = self.cards.filter(Card.blocknum > Blocknum.first().value)
 
     def process_issue(self, card):
-        c_short_id = card.txid[0:10]
+        c_short_id = card.id[0:10]
 
         def ONCE( amount: int = card.amount ):
             ''' Set Issuer object to a query of all accounts containing the deck issuing address '''
@@ -69,7 +68,7 @@ class DeckState:
 
             elif Issuer.first() is None:
                 ''' Create a genesis CardIssue account then process receiver '''
-                B = Balance( self.deck.issuer + c_short_id , -abs(amount), self.short_id)
+                B = Balance( self.deck.issuer + c_short_id , -abs(amount), self.short_id, card.blockhash)
                 try:
                     db.session.add(B)
                     db.session.commit()
@@ -88,10 +87,10 @@ class DeckState:
 
             if Sender.first() is not None:
                 ''' If there is already an existing address for the sender '''
-                Sender.update( {"value" : Sender.first().value  - abs(amount) }, synchronize_session='fetch' )
+                Sender.update( {"value" : Sender.first().value  - abs(amount), "checkpoint": card.blockhash }, synchronize_session='fetch' )
             
             elif Sender.first() is None:
-                B = Balance( card.sender + c_short_id , -abs(amount), self.short_id)
+                B = Balance( card.sender + c_short_id , -abs(amount), self.short_id, card.blockhash)
                 db.session.add(B)
                 db.session.commit()
 
@@ -100,10 +99,10 @@ class DeckState:
             Receiver = self.balances.filter( Balance.account == card.receiver )
 
             if Receiver.first() is not None:
-                Receiver.update( {"value" : Receiver.first().value  + amount}, synchronize_session='fetch' )
+                Receiver.update( {"value" : Receiver.first().value  + amount, "checkpoint": blockhash}, synchronize_session='fetch' )
             
             if Receiver.first() is None:
-                B = Balance( card.receiver , amount, self.short_id)
+                B = Balance( card.receiver , amount, self.short_id, card.blockhash)
                 db.session.add(B)
                 db.session.commit()
 
@@ -155,7 +154,7 @@ class DeckState:
         if Receiver.first() is not None:
             Receiver.first().update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
         else:
-            B = Balance('CardBurn', amount, self.short_id)
+            B = Balance('CardBurn', amount, self.short_id, card.blockhash)
             db.session.add(B)
             db.session.commit()
 
@@ -178,7 +177,7 @@ class DeckState:
                 return
 
             elif Receiver.first() is None:
-                B = Balance(card.receiver, amount, self.short_id)
+                B = Balance(card.receiver, amount, self.short_id, card.blockhash)
                 db.session.add(B)
                 db.session.commit()
             else:
@@ -188,6 +187,7 @@ class DeckState:
             Sender = self.balances.filter(Balance.account == card.sender)
             Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
             db.session.commit()
+
         return
 
     def process_cards(self):
@@ -213,11 +213,11 @@ class DeckState:
                 
                 else:
                     process_transaction(card)
+    
 
 def init_state(deck_id):
     try:
         DeckState(deck_id)
     except Exception as e:
-        print(e)
         pass
     return
