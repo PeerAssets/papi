@@ -77,7 +77,11 @@ def balances(deck_id):
         balance = balance.__dict__
         balances[balance["account"]] =  balance["value"]
 
-    return jsonify( balances )
+    #Check if balances was returned null
+    if balances:
+        return jsonify( balances )
+    else:
+        return jsonify( 'no balances found for this deck' )
 
 @app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
 def total(deck_id):
@@ -89,11 +93,19 @@ def total(deck_id):
     Issued = Balances.filter( Balance.account.contains(issuer)).filter(func.char_length( Balance.account ) > 34)
     Accounts = Balances.filter( func.char_length( Balance.account ) == 34)
 
-    issued = abs( Issued.with_entities(func.sum(Balance.value)).scalar() )
+    #Calling abs() on this function produces a "Bad operand type for abs(): NoneType error"
+    #issued = abs( Issued.with_entities(func.sum(Balance.value)).scalar() )
+    #Do a check for when supply is returned null
+    #If supply is not null, return abs(issued)
+    issued = Issued.with_entities(func.sum(Balance.value)).scalar()
+    
     total = Accounts.with_entities(func.sum(Balance.value)).scalar()
 
-    if issued == total:
-        return jsonify( {'supply': issued} )
+    if ( issued is not None ):
+        if (abs(issued) == total):
+            return jsonify( {'supply': abs(issued)} )
+    else:
+        return jsonify( 'no supply found for this deck' )  
 
 @app.route('/alert', methods=['POST'])
 def alert():
