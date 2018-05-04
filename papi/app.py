@@ -105,7 +105,7 @@ def total(deck_id):
         if (abs(issued) == total):
             return jsonify( {'supply': abs(issued)} )
     else:
-        return jsonify( 'no supply found for this deck' )  
+        return jsonify({'Error:': 'No cards found for this deck.'})  
 
 @app.route('/alert', methods=['POST'])
 def alert():
