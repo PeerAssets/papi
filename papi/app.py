@@ -6,6 +6,9 @@ from data import *
 from models import db, init_db
 from restless  import init_restless
 import pypeerassets as pa
+#Heuy imports
+from tasks import rescan_blockchain_and_update
+from gevent import monkey; monkey.patch_all()
 
 app = Flask(__name__)
 CORS(app)
@@ -122,4 +125,6 @@ if __name__ == '__main__':
     init_db(app)
     init_restless(app)
     init_pa()
+    #Initiate Huey process
+    huey.start()
     app.run(host='0.0.0.0',port=5555)
