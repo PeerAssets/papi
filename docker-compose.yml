@@ -31,7 +31,7 @@ services:
       - RPC_PASSWORD=papipass
     volumes:
       - papi-volume:/var/lib/papi/
-    command: ["./wait-for-it.sh", "peercoind:9904", "--", "python3", "app.py"]
+    command: ["./wait-for-it.sh", "peercoind:9904", "--", "python3", "main.py"]
 volumes:
   papi-volume:
     driver: local
