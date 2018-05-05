@@ -1,4 +1,6 @@
 from os import environ
+from huey import crontab
+from huey.contrib.minimal import MiniHuey
 
 # db connection URI to be passed to sqlalchemy, as in http://docs.sqlalchemy.org/en/latest/core/engines.html
 db_engine = environ.get('DB', 'sqlite:///papi.db')
@@ -23,3 +25,5 @@ rpc_password = environ.get('RPC_PASSWORD', None)
 # subscribed deck list
 # Use '*' inside the list to subscribe to all decks or use deck id's to subscribe to specified decks only
 subscribed = ['*']
+#Huey settings
+huey = MiniHuey('rescan')
