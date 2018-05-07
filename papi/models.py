@@ -25,22 +25,23 @@ class Deck(db.Model):
 class Card(db.Model):
     """"""
     __tablename__ = "cards"
-    id = db.Column(db.String, primary_key=True, unique=True) #concatenate txid + blockseq + cardseq
+    txid = db.Column(db.String, primary_key=True)
     blockhash = db.Column(db.String)
-    cardseq = db.Column(db.Integer)
+    cardseq = db.Column(db.Integer, primary_key=True)
     receiver = db.Column(db.String)
     sender = db.Column(db.String)
     amount = db.Column(db.Integer)
     ctype = db.Column(db.String)
     blocknum = db.Column(db.Integer)
-    blockseq = db.Column(db.Integer)
+    blockseq = db.Column(db.Integer, primary_key=True)
     deck_id = db.Column(db.String)
     valid = db.Column(db.Boolean)
+    __table_args__ = (db.UniqueConstraint('txid','blockseq','cardseq'),)
     
     #----------------------------------------------------------------------
-    def __init__(self, id, blockhash, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
+    def __init__(self, txid, blockhash, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
         """"""
-        self.id = id
+        self.txid = txid
         self.blockhash = blockhash
         self.cardseq = cardseq
         self.receiver = receiver

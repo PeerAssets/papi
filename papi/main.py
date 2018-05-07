@@ -39,7 +39,6 @@ def decks(deck_id):
         for card in Cards:
             card = card.__dict__
             del card['_sa_instance_state']
-            card['txid'] = card['id'][:64]
             cards.append(card)
         return cards
 

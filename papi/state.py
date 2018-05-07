@@ -30,7 +30,7 @@ class DeckState:
             self.cards = self.cards.filter(Card.blocknum > Blocknum.first().value)
 
     def process_issue(self, card):
-        c_short_id = card.id[0:10]
+        c_short_id = card.txid[0:10]
 
         def ONCE( amount: int = card.amount ):
             ''' Set Issuer object to a query of all accounts containing the deck issuing address '''
@@ -49,7 +49,7 @@ class DeckState:
 
                         process_sender(amount, card)
                         process_receiver(amount, card)
-                        _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                        _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                         _card.valid = True
                         db.session.commit()
                         return
@@ -61,7 +61,7 @@ class DeckState:
                     process_sender(amount, card, tag=True)
                     # Tag set to True ensures that the CardIssue transactions are grouped by c_short_id
                     process_receiver(amount, card)
-                    _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                    _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                     _card.valid = True
                     db.session.commit()
                     return
@@ -73,7 +73,7 @@ class DeckState:
                     db.session.add(B)
                     db.session.commit()
                     process_receiver( amount, card)
-                    _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                    _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                     _card.valid = True
                     db.session.commit()
                 except Exception as e:
@@ -119,7 +119,7 @@ class DeckState:
                     process_sender( amount, card, tag=True )
 
                 process_receiver( amount, card )
-                _card = db.session.query(Card).filter( Card.id == card.id ).first()
+                _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                 _card.valid = True
                 db.session.commit()
                 return
