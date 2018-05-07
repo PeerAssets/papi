@@ -52,7 +52,7 @@ def add_cards(cards):
 
 def load_key(deck_id):
     from binascii import unhexlify
-    wif = pa.Kutil(privkey=pa.kutil.PrivateKey(deck_id), network=node.network).wif
+    wif = pa.Kutil(privkey=pa.kutil.PrivateKey(unhexlify(deck_id)), network=node.network).wif
     node.importprivkey(wif,deck_id)
 
 def init_decks():
