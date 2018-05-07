@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 services:
   peercoind:
     restart: always
@@ -9,7 +9,9 @@ services:
       - RPC_USER=papi
       - RPC_PASSWORD=papipass
     volumes:
-      - peercoind-volume:/home/sunny/.ppcoin
+      - type: bind
+        source: /opt/papi/peercoin/
+        target: /data
     command:
       -testnet
       -rpcallowip=*
@@ -30,10 +32,7 @@ services:
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
     volumes:
-      - papi-volume:/var/lib/papi/
+      - type: bind
+        source: /opt/papi/
+        target: /var/lib/papi/
     command: ["./wait-for-it.sh", "peercoind:9904", "--", "python3", "main.py"]
-volumes:
-  papi-volume:
-    driver: local
-  peercoind-volume:
-    driver: local
