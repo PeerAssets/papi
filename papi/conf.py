@@ -15,7 +15,7 @@ version = environ.get('PA_VERSION', 1)
 # ip address of the peercoin node
 rpc_host = environ.get('RPC_HOST', 'localhost')
 # port of the peercoin node
-rpc_port = environ.get('RCP_PORT', '9904')
+rpc_port = environ.get('RPC_PORT', '9904')
 # username for rpc connection
 rpc_username = environ.get('RPC_USERNAME', None)
 # password for the rpc_connection
