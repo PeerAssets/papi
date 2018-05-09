@@ -133,7 +133,7 @@ def checkpoint(deck_id):
 
     if checkpoint:
         for i in range(len(checkpoint)):
-            if ['blockhash'] in checkpoint.keys(): #Check if key exists first
+            if 'blockhash' in checkpoint: #Check if key exists first
                 if checkpoint[i]['blockhash'] == _checkpoint:
                     return True
 
