@@ -131,10 +131,11 @@ def checkpoint(deck_id):
     checkpoint = node.listtransactions(deck_id)[::-1]
     _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
 
-    if checkpoint:
+     if checkpoint:
         for i in range(len(checkpoint)):
-            if checkpoint[i]['blockhash'] == _checkpoint:
-                return True
+            if ['blockhash'] in checkpoint: #Check if key exists first
+                if checkpoint[i]['blockhash'] == _checkpoint:
+                    return True
 
             tx = checkpoint[i]['txid']
             rawtx = node.getrawtransaction(tx,1)
