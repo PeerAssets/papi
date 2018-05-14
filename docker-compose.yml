@@ -20,7 +20,7 @@ services:
     restart: always
     build: .
     ports:
-      - "8080:8080"
+      - "5555:5555"
     depends_on:
       - peercoind
     environment:
