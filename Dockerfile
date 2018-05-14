@@ -25,8 +25,8 @@ ENV APP_ENV=docker
 
 VOLUME /var/lib/papi/
 
-ENV LISTEN_PORT 5555
+ENV LISTEN_PORT 8080
 
-EXPOSE 5555
+EXPOSE 8080
 
 ENTRYPOINT ["python3", "main.py"]
