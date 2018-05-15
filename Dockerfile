@@ -23,8 +23,6 @@ USER ${USERNAME}
 
 ENV APP_ENV=docker
 
-VOLUME /var/lib/papi/
-
 ENV LISTEN_PORT 5555
 
 EXPOSE 5555

@@ -32,8 +32,4 @@ services:
       - RPC_PORT=19904
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
-    volumes:
-      - type: bind
-        source: /opt/papi/
-        target: /var/lib/papi/
     command: ["./wait-for-it.sh", "peercoind:19904", "--", "python3", "main.py"]
