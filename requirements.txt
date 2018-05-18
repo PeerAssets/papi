@@ -5,5 +5,5 @@ Flask-Cors==3.0.3
 Flask-Restless==0.17.0
 
 peercoin_rpc
--e git://github.com/PeerAssets/pypeerassets@master#egg=pypeerassets
--e git://github.com/PeerAssets/btcpy@master#egg=btcpy
+-e git://github.com/PeerAssets/pypeerassets@ALLPY#egg=pypeerassets
+-e git://github.com/PeerAssets/btcpy@ALLPY#egg=btcpy
