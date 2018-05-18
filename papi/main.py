@@ -101,11 +101,15 @@ def total(deck_id):
     
     total = Accounts.with_entities(func.sum(Balance.value)).scalar()
 
-    if ( issued is not None ):
+    if ( issued ):
         if (abs(issued) == total):
             return jsonify( {'supply': abs(issued)} )
+        else:
+            return jsonify( {'Error:': 'Invalid card transfers found in database', 'Total issued:': abs(issued), 'Total valid:': total} )
     else:
-        return jsonify({'Error:': 'No cards found for this deck.'})  
+        return jsonify({'Error:': 'No cards found for this deck.'}) 
+
+
 
 @app.route('/alert', methods=['POST'])
 def alert():
