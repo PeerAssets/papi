@@ -62,7 +62,7 @@ def decks(deck_id):
 
         return jsonify(decks)
 
-@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'])
+@app.route('/api/v1/decks/<deck_id>/balances', methods=['GET','POST'], strict_slashes=False)
 def balances(deck_id):
     short_id = deck_id[0:10]
     balances = {}
@@ -83,7 +83,7 @@ def balances(deck_id):
     else:
         return jsonify( 'no balances found for this deck' )
 
-@app.route('/api/v1/decks/<deck_id>/total', methods=['GET'])
+@app.route('/api/v1/decks/<deck_id>/total', methods=['GET'], strict_slashes=False)
 def total(deck_id):
 
     issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
