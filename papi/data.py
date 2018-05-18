@@ -43,7 +43,7 @@ def add_cards(cards):
     if cards is not None:
         for cardset in cards:
             for card in cardset:
-                entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()   
+                entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                 if not entry:
                     C = Card( card.txid, card.blockhash, card.cardseq, card.receiver[0], card.sender, card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False )
                     db.session.add(C)
@@ -51,8 +51,11 @@ def add_cards(cards):
 
 def load_key(deck_id):
     from binascii import unhexlify
-    wif = pa.Kutil(privkey=pa.kutil.PrivateKey(unhexlify(deck_id)), network=node.network).wif
-    node.importprivkey(wif,deck_id)
+    try:
+        wif = pa.Kutil(privkey=unhexlify(deck_id), network=node.network).wif
+        node.importprivkey( wif, deck_id)
+    except Exception as e:
+        print(e)
 
 def init_decks():
     accounts = node.listaccounts()
@@ -69,7 +72,7 @@ def init_decks():
             if deck is not None:
                 if deck.id not in accounts:
                     load_key(deck.id)
-                add_deck(deck)
+                    add_deck(deck)
                 try:
                     if not checkpoint(deck.id):
                         add_cards( pa.find_card_transfers(node, deck) )
@@ -134,26 +137,30 @@ def update_state(deck_id):
         return
 
 def checkpoint(deck_id):
-    checkpoint = node.listtransactions(deck_id)[::-1]
-    _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
+    txs = node.listtransactions(deck_id)
+    accounts = node.listaccounts()
+    if deck_id not in accounts:
+        load_key(deck_id)
+    if isinstance(txs,list):
+        checkpoint = txs[::-1]
+        _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
 
-    if checkpoint:
-        for i in range(len(checkpoint)):
-            if 'blockhash' in checkpoint: #Check if key exists first
-                if checkpoint[i]['blockhash'] == _checkpoint:
-                    return True
+        if checkpoint:
+            for i in range(len(checkpoint)):
+                if 'blockhash' in checkpoint: #Check if key exists first
+                    if checkpoint[i]['blockhash'] == _checkpoint:
+                        return True
 
-            tx = checkpoint[i]['txid']
-            rawtx = node.getrawtransaction(tx,1)
-            deck = pa.find_deck(node, deck_id, version)
-            try:
-                pa.validate_card_transfer_p2th(deck, rawtx)
-                return _checkpoint.blockhash == checkpoint[i]['blockhash']
-            except Exception:
-                continue
+                tx = checkpoint[i]['txid']
+                rawtx = node.getrawtransaction(tx,1)
+                deck = pa.find_deck(node, deck_id, version)
+                try:
+                    pa.validate_card_transfer_p2th(deck, rawtx)
+                    return _checkpoint.blockhash == checkpoint[i]['blockhash']
+                except Exception:
+                    continue
 
             return False
-
     return False
 
 def init_pa():
