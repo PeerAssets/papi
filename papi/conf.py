@@ -10,6 +10,8 @@ testnet = environ.get('PA_TESTNET', True)
 production = environ.get('PA_PRODUCTION', True)
 # autoload the decks
 autoload = environ.get('AUTOLOAD', True)
+# max attempts to connect to the local node
+max_attempts = environ.get('MAX_ATTEMPTS', 10)
 # deck version to use
 version = environ.get('PA_VERSION', 1)
 # ip address of the peercoin node

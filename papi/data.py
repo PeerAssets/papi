@@ -41,23 +41,26 @@ while True:
             ''' if node is synced with the network then break and continue papi initialization'''
             break
         else:
-            ''' if node is not synced then wait 2 seconds and try again '''
-            sleep(2)
+            ''' if node is not synced then wait 3 seconds and try again '''
+            sleep(3)
             continue
 
     except (FileNotFoundError, ConnectionError, Exception) as e:
         attempts +=1
+        if attempts >= max_attempts:
+            raise Exception('Max connection attempts reached. Stopping papi...')
+
         if isinstance(e,FileNotFoundError):
             ''' This will occur if local node configuration file is not created/defined with correct RPC parameters'''
             sys.stdout.write('Waiting for RPC parameters\r')
         elif isinstance(e, ConnectionError):
             ''' This will be occur when the local node is not running'''
-            sys.stdout.write('Waiting for connection to local node. Attempt(s): {}\r'.format(attempts))
+            sys.stdout.write('Waiting for connection to local node. Attempt(s): {} of {}\r'.format(attempts, max_attempts))
         else:
             sys.stdout.write(str(e) + '\r')
 
         sys.stdout.flush()
-        sleep(2)
+        sleep(3)
         continue
 
 def init_p2thkeys():
