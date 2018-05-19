@@ -31,7 +31,7 @@ class DeckState:
 
     def process_issue(self, card):
         c_short_id = card.txid[0:10]
-
+    
         def ONCE( amount: int = card.amount ):
             ''' Set Issuer object to a query of all accounts containing the deck issuing address '''
             Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
@@ -99,7 +99,7 @@ class DeckState:
             Receiver = self.balances.filter( Balance.account == card.receiver )
 
             if Receiver.first() is not None:
-                Receiver.update( {"value" : Receiver.first().value  + amount, "checkpoint": blockhash}, synchronize_session='fetch' )
+                Receiver.update( {"value" : Receiver.first().value  + amount, "checkpoint": card.blockhash}, synchronize_session='fetch' )
             
             if Receiver.first() is None:
                 B = Balance( card.receiver , amount, self.short_id, card.blockhash)
@@ -116,7 +116,7 @@ class DeckState:
                 if Issuer.filter( Balance.account.contains( card.sender ) ).first() is not None:
                     process_sender( amount, card )
                 else:
-                    process_sender( amount, card, tag=True )
+                    process_sender( amount, card )
 
                 process_receiver( amount, card )
                 _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
