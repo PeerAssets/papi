@@ -1,16 +1,64 @@
 import pypeerassets as pa
+from time import sleep
+from requests.exceptions import ConnectionError
 from models import Deck, Card, Balance, db
 from state import DeckState, init_state
 from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
-try:
-    node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
-                      ip=rpc_host, port=rpc_port)
-except FileNotFoundError:
-    print('Error: Please provide with RPC parameteres.')
+node = None
+attempts = 0
 
+def node_sync():
+    global node
+    if not isinstance(node, pa.RpcNode):
+        ''' Initiate RpcNode'''
+        node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
+                            ip=rpc_host, port=rpc_port)
+    info = node.getinfo()
+
+    if info['connections']:
+        ''' Making sure node has connections'''
+        recent = []
+
+        for i in node.getpeerinfo():
+            ''' Appending connected peers current blockheights'''
+            recent.append(i['startingheight'])
+
+        if info['blocks'] < max(recent) - 500:
+            ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
+            sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'],max(recent)))
+            return False
+        else:
+            ''' Node is now synced and the function returns True to begin papi initialization'''
+            sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
+            return True
+
+while True:
+    try:
+        if node_sync():
+            ''' if node is synced with the network then break and continue papi initialization'''
+            break
+        else:
+            ''' if node is not synced then wait 2 seconds and try again '''
+            sleep(2)
+            continue
+
+    except (FileNotFoundError, ConnectionError, Exception) as e:
+        attempts +=1
+        if isinstance(e,FileNotFoundError):
+            ''' This will occur if local node configuration file is not created/defined with correct RPC parameters'''
+            sys.stdout.write('Waiting for RPC parameters\r')
+        elif isinstance(e, ConnectionError):
+            ''' This will be occur when the local node is not running'''
+            sys.stdout.write('Waiting for connection to local node. Attempt(s): {}\r'.format(attempts))
+        else:
+            sys.stdout.write(str(e) + '\r')
+
+        sys.stdout.flush()
+        sleep(2)
+        continue
 
 def init_p2thkeys():
     n = 0
@@ -63,7 +111,7 @@ def init_decks():
 
     def message(n):
         sys.stdout.flush()
-        sys.stdout.write('{} Decks Loaded\r'.format(n))
+        sys.stdout.write('\r{} Decks Loaded\r'.format(n))
 
     if not autoload:
         decks = [pa.find_deck(node,txid,version) for txid in subscribed]
@@ -83,7 +131,7 @@ def init_decks():
                 message(n)
 
     else:
-        decks = pa.find_all_valid_decks(node, 1, True)
+        decks = pa.find_all_valid_decks(node, version, production)
         while True:
             try: 
                 deck = next( decks )

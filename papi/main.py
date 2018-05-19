@@ -115,8 +115,8 @@ def total(deck_id):
 def alert():
     txid = request.values.get('txid')
     if txid is not None:
-        deck = which_deck(txid)['deck_id']
-        if deck in subscribed:
+        deck = which_deck(txid)
+        if deck is not None and deck['deck_id'] in subscribed:
             update_state(deck)
 
     return jsonify({'walletnotify': bool(txid)})
