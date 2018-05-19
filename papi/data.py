@@ -10,12 +10,13 @@ import sys
 node = None
 attempts = 0
 
+
 def node_sync():
     global node
     if not isinstance(node, pa.RpcNode):
         ''' Initiate RpcNode'''
         node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
-                            ip=rpc_host, port=rpc_port)
+                          ip=rpc_host, port=rpc_port)
     info = node.getinfo()
 
     if info['connections']:
@@ -35,6 +36,7 @@ def node_sync():
             sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
             return True
 
+
 while True:
     try:
         if node_sync():
@@ -46,7 +48,7 @@ while True:
             continue
 
     except (FileNotFoundError, ConnectionError, Exception) as e:
-        attempts +=1
+        attempts += 1
         if attempts >= max_attempts:
             raise Exception('Max connection attempts reached. Stopping papi...')
 
@@ -63,11 +65,12 @@ while True:
         sleep(3)
         continue
 
+
 def init_p2thkeys():
-    n = 0
 
     if autoload:
-        pa.pautils.load_p2th_privkey_into_local_node(node,production)
+        pa.pautils.load_p2th_privkey_into_local_node(node, production)
+
 
 def add_deck(deck):
     if deck is not None:
@@ -76,7 +79,6 @@ def add_deck(deck):
             subscribe = True
         else:
             subscribe = deck.id in subscribed
-        
 
         if not entry:
             try:
