@@ -7,12 +7,9 @@ from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
-node = None
-attempts = 0
 
+def node_sync(node):
 
-def node_sync():
-    global node
     if not isinstance(node, pa.RpcNode):
         ''' Initiate RpcNode'''
         node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
@@ -30,17 +27,22 @@ def node_sync():
         if info['blocks'] < max(recent) - 500:
             ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
             sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'],max(recent)))
-            return False
+            return {'synced': False ,'node': node}
         else:
             ''' Node is now synced and the function returns True to begin papi initialization'''
             sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
-            return True
+            return {'synced': True ,'node': node}
 
 
 while True:
+    node = None
+    attempts = 0
+
     try:
-        if node_sync():
+        connection = node_sync(node)
+        if connection['synced']:
             ''' if node is synced with the network then break and continue papi initialization'''
+            node = connection['node']
             break
         else:
             ''' if node is not synced then wait 3 seconds and try again '''
@@ -49,7 +51,7 @@ while True:
 
     except (FileNotFoundError, ConnectionError, Exception) as e:
         attempts += 1
-        if attempts >= max_attempts:
+        if attempts > max_attempts:
             raise Exception('Max connection attempts reached. Stopping papi...')
 
         if isinstance(e,FileNotFoundError):
