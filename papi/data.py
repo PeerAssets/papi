@@ -33,10 +33,11 @@ def node_sync(node):
             sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
             return {'synced': True ,'node': node}
 
+''' Connection attempts counter'''
+attempts = 0
 
 while True:
     node = None
-    attempts = 0
 
     try:
         connection = node_sync(node)
