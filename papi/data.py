@@ -1,73 +1,13 @@
 import pypeerassets as pa
-from time import sleep
-from requests.exceptions import ConnectionError
+from sync import Sync, attempt_connection
 from models import Deck, Card, Balance, db
 from state import DeckState, init_state
 from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
-
-def node_sync(node):
-
-    if not isinstance(node, pa.RpcNode):
-        ''' Initiate RpcNode'''
-        node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
-                          ip=rpc_host, port=rpc_port)
-    info = node.getinfo()
-
-    if info['connections']:
-        ''' Making sure node has connections'''
-        recent = []
-
-        for i in node.getpeerinfo():
-            ''' Appending connected peers current blockheights'''
-            recent.append(i['startingheight'])
-
-        if info['blocks'] < max(recent) - 500:
-            ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
-            sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'],max(recent)))
-            return {'synced': False ,'node': node}
-        else:
-            ''' Node is now synced and the function returns True to begin papi initialization'''
-            sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
-            return {'synced': True ,'node': node}
-
 ''' Connection attempts counter'''
-attempts = 0
-
-while True:
-    node = None
-
-    try:
-        connection = node_sync(node)
-        if connection is not None and connection['synced']:
-            ''' if node is synced with the network then break and continue papi initialization'''
-            node = connection['node']
-            break
-        else:
-            ''' if node is not synced then wait 3 seconds and try again '''
-            sleep(3)
-            continue
-
-    except (FileNotFoundError, ConnectionError, Exception) as e:
-        attempts += 1
-        if attempts > max_attempts:
-            raise Exception('Max connection attempts reached. Stopping papi...')
-
-        if isinstance(e,FileNotFoundError):
-            ''' This will occur if local node configuration file is not created/defined with correct RPC parameters'''
-            sys.stdout.write('Waiting for RPC parameters\r')
-        elif isinstance(e, ConnectionError):
-            ''' This will be occur when the local node is not running'''
-            sys.stdout.write('Waiting for connection to local node. Attempt(s): {} of {}\r'.format(attempts, max_attempts))
-        else:
-            sys.stdout.write(str(e) + '\r')
-
-        sys.stdout.flush()
-        sleep(3)
-        continue
-
+node = attempt_connection( Sync() )
 
 def init_p2thkeys():
 
@@ -95,6 +35,7 @@ def add_deck(deck):
             db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
             db.session.commit()
 
+
 def add_cards(cards):
     if cards is not None:
         for cardset in cards:
@@ -105,6 +46,7 @@ def add_cards(cards):
                     db.session.add(C)
                 db.session.commit()
 
+
 def load_key(deck_id):
     from binascii import unhexlify
     try:
@@ -112,6 +54,7 @@ def load_key(deck_id):
         node.importprivkey( wif, deck_id)
     except Exception as e:
         print(e)
+
 
 def init_decks():
     accounts = node.listaccounts()
@@ -160,10 +103,12 @@ def init_decks():
             except StopIteration:
                 break
 
+
 def update_decks(txid):
     deck = pa.find_deck(node, txid, version)
     add_deck(deck)
     return
+
 
 def which_deck(txid):
     deck = node.gettransaction(txid)
@@ -187,10 +132,12 @@ def which_deck(txid):
     else:
         return
 
+
 def update_state(deck_id):
     if not checkpoint(deck_id):
         DeckState(deck_id)
         return
+
 
 def checkpoint(deck_id):
     ''' List all accounts and check if deck_id is loaded into the node'''
@@ -235,6 +182,7 @@ def checkpoint(deck_id):
             return False
 
     return False
+
 
 def init_pa():
     init_p2thkeys()
