@@ -7,12 +7,9 @@ from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
-node = None
-attempts = 0
 
+def node_sync(node):
 
-def node_sync():
-    global node
     if not isinstance(node, pa.RpcNode):
         ''' Initiate RpcNode'''
         node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
@@ -30,17 +27,23 @@ def node_sync():
         if info['blocks'] < max(recent) - 500:
             ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
             sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'],max(recent)))
-            return False
+            return {'synced': False ,'node': node}
         else:
             ''' Node is now synced and the function returns True to begin papi initialization'''
             sys.stdout.write('\r\nConnected : {}\nTestnet = {}\n'.format(info['version'], info['testnet']))
-            return True
+            return {'synced': True ,'node': node}
 
+''' Connection attempts counter'''
+attempts = 0
 
 while True:
+    node = None
+
     try:
-        if node_sync():
+        connection = node_sync(node)
+        if connection is not None and connection['synced']:
             ''' if node is synced with the network then break and continue papi initialization'''
+            node = connection['node']
             break
         else:
             ''' if node is not synced then wait 3 seconds and try again '''
@@ -49,7 +52,7 @@ while True:
 
     except (FileNotFoundError, ConnectionError, Exception) as e:
         attempts += 1
-        if attempts >= max_attempts:
+        if attempts > max_attempts:
             raise Exception('Max connection attempts reached. Stopping papi...')
 
         if isinstance(e,FileNotFoundError):
@@ -190,30 +193,47 @@ def update_state(deck_id):
         return
 
 def checkpoint(deck_id):
-    txs = node.listtransactions(deck_id)
+    ''' List all accounts and check if deck_id is loaded into the node'''
     accounts = node.listaccounts()
+
     if deck_id not in accounts:
+        ''' if deck_id is not in accounts, load the key into the local node'''
         load_key(deck_id)
+
+    ''' list all transactions for a particular deck '''
+    txs = node.listtransactions(deck_id)
+
     if isinstance(txs,list):
+        ''' Make sure txs is a list rather than a dict with an error. Reverse list order.'''
         checkpoint = txs[::-1]
+        ''' Get the most recent card transaction recorded in the database for the given deck '''
         _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
 
-        if checkpoint:
-            for i in range(len(checkpoint)):
-                if 'blockhash' in checkpoint: #Check if key exists first
-                    if checkpoint[i]['blockhash'] == _checkpoint:
+        if _checkpoint is not None:
+            ''' If database query doesn't return None type then checkpoint exists'''
+            for i, v in enumerate(checkpoint):
+                ''' for each transaction in local node listtransactions '''
+
+                if ('blockhash','txid') in v:
+                    ''' Check that keys exists within dict ''' 
+                    if v['blockhash'] == _checkpoint.blockhash:
                         return True
 
-                tx = checkpoint[i]['txid']
-                rawtx = node.getrawtransaction(tx,1)
-                deck = pa.find_deck(node, deck_id, version)
-                try:
-                    pa.validate_card_transfer_p2th(deck, rawtx)
-                    return _checkpoint.blockhash == checkpoint[i]['blockhash']
-                except Exception:
-                    continue
+                    txid = v['txid']
+                    rawtx = node.getrawtransaction(txid,1)
+
+                    ''' get deck object of current deck_id '''
+                    deck = pa.find_deck(node, deck_id, version)
+                    try:
+                        ''' check if it's a valid PeerAssets transaction '''
+                        pa.validate_card_transfer_p2th(deck, rawtx)
+                        ''' return False if checkpoints don't match and True if they do '''
+                        return _checkpoint.blockhash == v['blockhash']
+                    except Exception:
+                        continue
 
             return False
+
     return False
 
 def init_pa():
