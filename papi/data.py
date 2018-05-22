@@ -41,7 +41,7 @@ while True:
 
     try:
         connection = node_sync(node)
-        if connection['synced']:
+        if connection is not None and connection['synced']:
             ''' if node is synced with the network then break and continue papi initialization'''
             node = connection['node']
             break
