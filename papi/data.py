@@ -7,7 +7,8 @@ from conf import *
 import sys
 
 ''' Connection attempts counter'''
-node = attempt_connection( Sync() )
+connection = attempt_connection( Sync() )
+node = connection.node
 
 def init_p2thkeys():
 
