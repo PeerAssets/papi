@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from requests import post
 from sys import argv
 from data import connection
