@@ -81,6 +81,4 @@ def attempt_connection(connection):
             sleep(3)
             continue
             
-    return connection.node
-
-    
+    return connection
