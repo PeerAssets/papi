@@ -11,7 +11,7 @@ class Sync:
         self.synced = False
         self.node = None
         self.info = None
-        self.recent = 0
+        self.recent = []
         self.attempts = 0
 
         try:
@@ -60,7 +60,7 @@ def attempt_connection(connection):
                 break
             else:
                 ''' if node is not synced then wait 3 seconds and try again '''
-                sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'], connection.recent))
+                sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'], max(connection.recent)))
                 sleep(3)
                 continue
 
@@ -76,6 +76,7 @@ def attempt_connection(connection):
                 ''' This will be occur when the local node is not running'''
                 sys.stdout.write('Waiting for connection to local node. Attempt(s): {} of {}\r'.format(connection.attempts, max_attempts))
             else:
+                sys.stdout.write('Waiting for connection to peers. Attempt(s): {} of {}\r'.format(connection.attempts, max_attempts))
                 pass
 
             sleep(3)
