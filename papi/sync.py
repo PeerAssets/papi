@@ -37,7 +37,7 @@ class Sync:
                 except ValueError:
                     return False
 
-                if self.info['blocks'] < self.recent - 500:
+                if self.recent and (self.info['blocks'] < self.recent - 500):
                     ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
                     self.synced = False
                 else:
