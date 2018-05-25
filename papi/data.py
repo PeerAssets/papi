@@ -87,20 +87,18 @@ def init_decks():
         while True:
             try: 
                 deck = next( decks )
-                if deck.id not in accounts:
-                    load_key(deck.id)
                 add_deck( deck )
-                if not checkpoint(deck.id):
-                    try:
-                        if '*' in subscribed:
+                try:
+                    if ('*' or deck.id) in subscribed:
+                        if deck.id not in accounts:
+                            load_key(deck.id)
+                        if not checkpoint(deck.id):
                             add_cards( pa.find_card_transfers( node, deck ) )
-                        elif deck.id in subscribed:
-                            add_cards( pa.find_card_transfers( node, deck ) )
-                    except:
-                        continue
-                    init_state(deck.id)
-                    n += 1
-                    message(n)
+                except:
+                    continue
+                init_state(deck.id)
+                n += 1
+                message(n)
             except StopIteration:
                 break
 
