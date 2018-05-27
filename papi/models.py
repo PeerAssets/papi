@@ -11,9 +11,10 @@ class Deck(db.Model):
     issue_mode = db.Column(db.Integer)
     decimals = db.Column(db.Integer)
     subscribed = db.Column(db.Boolean)
+    asset_specific_data = db.Column(db.String)
     
     #----------------------------------------------------------------------
-    def __init__(self, id, name, issuer, issue_mode, decimals, subscribed):
+    def __init__(self, id, name, issuer, issue_mode, decimals, subscribed, asset_specific_data):
         """"""
         self.id = id
         self.name = name
@@ -21,6 +22,7 @@ class Deck(db.Model):
         self.issue_mode = issue_mode
         self.decimals = decimals
         self.subscribed = subscribed
+        self.asset_specific_data = asset_specific_data
 
 class Card(db.Model):
     """"""
@@ -36,10 +38,11 @@ class Card(db.Model):
     blockseq = db.Column(db.Integer, primary_key=True)
     deck_id = db.Column(db.String)
     valid = db.Column(db.Boolean)
+    asset_specific_data = db.Column(db.String)
     __table_args__ = (db.UniqueConstraint('txid','blockseq','cardseq'),)
     
     #----------------------------------------------------------------------
-    def __init__(self, txid, blockhash, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid):
+    def __init__(self, txid, blockhash, cardseq, receiver, sender, amount, ctype, blocknum, blockseq, deck_id, valid, asset_specific_data):
         """"""
         self.txid = txid
         self.blockhash = blockhash
@@ -52,6 +55,7 @@ class Card(db.Model):
         self.blockseq = blockseq
         self.deck_id = deck_id
         self.valid = valid
+        self.asset_specific_data = asset_specific_data
 
 class Balance(db.Model):
     """"""

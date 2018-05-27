@@ -24,4 +24,4 @@ rpc_username = environ.get('RPC_USERNAME', None)
 rpc_password = environ.get('RPC_PASSWORD', None)
 # subscribed deck list
 # Use '*' inside the list to subscribe to all decks or use deck id's to subscribe to specified decks only
-subscribed = ['*']
+subscribed = ['17d24b9bca5a090a24af138c2e085f80621396e8c7b6f820dee7140aee15cac1']

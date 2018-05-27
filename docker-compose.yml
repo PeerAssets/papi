@@ -16,6 +16,7 @@ services:
       -testnet
       -rpcallowip=*
       -rpcport=19904
+      -walletnotify='/app/transaction.py %s'
   papi:
     restart: always
     build: .

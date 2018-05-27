@@ -1,5 +1,5 @@
 from pypeerassets.protocol import IssueMode
-from data import *
+from .data import *
 from conf import subscribed
 
 class DeckState:
