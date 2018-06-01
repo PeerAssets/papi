@@ -9,7 +9,7 @@ api = Blueprint('api', __name__)
 
 @api.route('/')
 def index():
-    return redirect(url_for('decks'))
+    return redirect(url_for('api.decks'))
 
 @api.route('/api/v1/decks/<deck_id>', methods=['GET'])
 @api.route('/api/v1/decks', methods=['GET'], defaults={'deck_id':None}, strict_slashes=False)
