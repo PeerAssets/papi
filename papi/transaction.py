@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 import redis
+from requests import post
+from requests.exceptions import ConnectionError
+from conf import batch
 from sys import argv
 
-def wallet_notify(txid):
-    try:
-        pass
-        Queue.add(txid)
-    except Exception as e:
-        pass
+def wallet_notify(txid, batch = batch):
+    if not batch:
+        try:
+            post('http://0.0.0.0:5555/alert', data ={'txid':txid})
+        except ConnectionError:
+            pass
+    else:
+        try:
+            Queue.add(txid)
+        except Exception as e:
+            pass
 
 class Queue(object):
 

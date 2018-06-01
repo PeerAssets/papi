@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from conf import *
 import sys
 
+
 def init_p2thkeys():
 
     if autoload:
@@ -37,15 +38,14 @@ def add_deck(deck):
 
 def add_cards(cards):
     if cards is not None:
-        for cardset in cards:
-            for card in cardset:
-                entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
-                if not entry:
-                    data = hexlify(card.asset_specific_data).decode()
-                    C = Card( card.txid, card.blockhash, card.cardseq, card.receiver[0], card.sender, 
-                    card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False, data )
-                    db.session.add(C)
-                db.session.commit()
+        for card in cards:
+            entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+            if not entry:
+                data = hexlify(card.asset_specific_data).decode()
+                C = Card( card.txid, card.blockhash, card.cardseq, card.receiver[0], card.sender, 
+                card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False, data )
+                db.session.add(C)
+            db.session.commit()
 
 
 def load_key(deck_id):
@@ -59,84 +59,72 @@ def load_key(deck_id):
 
 def init_decks():
     accounts = node.listaccounts()
-    n = 0
 
     def message(n):
-        sys.stdout.flush()
         sys.stdout.write('\r{} Decks Loaded\r'.format(n))
+        sys.stdout.flush()
 
     if not autoload:
         decks = [pa.find_deck(node,txid,version) for txid in subscribed]
-
-        for deck in decks:
-            if deck is not None:
-                if deck.id not in accounts:
-                    load_key(deck.id)
-                add_deck(deck)
-                try:
-                    if not checkpoint(deck.id):
-                        add_cards( pa.find_card_transfers(node, deck) )
-                        init_state(deck.id)
-                except:
-                    continue
-                n += 1
-                message(n)
-
     else:
         decks = pa.find_all_valid_decks(node, version, production)
-        while True:
-            try: 
-                deck = next( decks )
-                add_deck( deck )
+
+    for i, deck in enumerate(decks):
+        if deck is not None:
+            add_deck(deck)
+
+        if any(i in subscribed for i in ('*', deck.id)):
+            if deck.id not in accounts:
+                load_key(deck.id)
+
+            if not checkpoint(deck.id):
                 try:
-                    if ('*' or deck.id) in subscribed:
-                        if deck.id not in accounts:
-                            load_key(deck.id)
-                        if not checkpoint(deck.id):
-                            add_cards( pa.find_card_transfers( node, deck ) )
+                    add_cards( pa.find_all_valid_cards(node, deck) )
                 except:
                     continue
                 init_state(deck.id)
-                n += 1
-                message(n)
-            except StopIteration:
-                break
+
+        message(i)
 
 
 def update_decks(txid):
     deck = pa.find_deck(node, txid, version)
-    add_deck(deck)
-    return
-
-
-def which_deck(txid):
-    deck = node.gettransaction(txid)
-    deck_id = None
-
-    if 'details' in deck.keys():
-         owneraccounts = [details['account'] for details in deck['details'] if details['account']]
-         if len(owneraccounts):
-             deck_id = [details['account'] for details in deck['details'] if details['account']][0]
-
-    if deck_id is not None:
-        if deck_id in ('PAPROD','PATEST'):
-            update_decks(txid)
-        elif deck_id in subscribed or subscribed == ['*']:
-            deck = pa.find_deck(node, deck_id, version)
-            if not checkpoint(deck_id):
-                add_cards( pa.find_card_transfers(node, deck) )
-                init_state(deck.id)
-                DeckState(deck_id)
-        return {'deck_id':deck_id}
-    else:
-        return
-
+    try:
+        add_deck(deck)
+    except KeyError:
+        ''' Transaction most likely still in mempool '''
+        pass
 
 def update_state(deck_id):
     if not checkpoint(deck_id):
         DeckState(deck_id)
         return
 
+def which_deck(txid):
+    import pypeerassets as pa
+    deck = node.gettransaction(txid)
+    deck_id = None
+
+    if 'details' in deck.keys():
+         owneraccounts = [details['account'] for details in deck['details'] if details['account']]
+         if owneraccounts:
+             deck_id = [details['account'] for details in deck['details'] if details['account']][0]
+
+    if deck_id is not None:
+        if deck_id in ('PAPROD','PATEST'):
+            update_decks(txid)
+
+        elif any(i in subscribed for i in ('*', deck_id)):
+            deck = pa.find_deck(node, deck_id, version)
+
+            if not checkpoint(deck_id):
+                remove_no_confirms(deck_id)
+                add_cards( pa.find_all_valid_cards(node, deck) )
+                init_state(deck.id)
+                DeckState(deck_id)
+        return {'walletnotify': True, 'deck_id':deck_id}
+    else:
+        return {'walletnotify': False, 'deck_id': deck_id}
 
 def checkpoint(deck_id):
     ''' List all accounts and check if deck_id is loaded into the node'''
@@ -148,6 +136,8 @@ def checkpoint(deck_id):
 
     ''' list all transactions for a particular deck '''
     txs = node.listtransactions(deck_id)
+    ''' get deck object of current deck_id '''
+    deck = pa.find_deck(node, deck_id, version)
 
     if isinstance(txs,list):
         ''' Make sure txs is a list rather than a dict with an error. Reverse list order.'''
@@ -155,32 +145,40 @@ def checkpoint(deck_id):
         ''' Get the most recent card transaction recorded in the database for the given deck '''
         _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
 
-        if _checkpoint is not None:
+        if _checkpoint is None:
+            return False
+
+        elif _checkpoint.blockhash:
             ''' If database query doesn't return None type then checkpoint exists'''
             for i, v in enumerate(checkpoint):
                 ''' for each transaction in local node listtransactions '''
-
-                if ('blockhash','txid') in v:
+                if ('txid','blockhash') in v.keys():
                     ''' Check that keys exists within dict ''' 
                     if v['blockhash'] == _checkpoint.blockhash:
                         return True
+                    else:
+                        txid = v['txid']
+                        rawtx = node.getrawtransaction(txid,1)
 
-                    txid = v['txid']
-                    rawtx = node.getrawtransaction(txid,1)
+                        try:
+                            ''' check if it's a valid PeerAssets transaction '''
+                            pa.pautils.validate_card_transfer_p2th(deck, rawtx)
+                            ''' return False if checkpoints don't match and True if they do '''
 
-                    ''' get deck object of current deck_id '''
-                    deck = pa.find_deck(node, deck_id, version)
-                    try:
-                        ''' check if it's a valid PeerAssets transaction '''
-                        pa.validate_card_transfer_p2th(deck, rawtx)
-                        ''' return False if checkpoints don't match and True if they do '''
-                        return _checkpoint.blockhash == v['blockhash']
-                    except Exception:
-                        continue
+                            return _checkpoint.blockhash == v['blockhash']
+                        except:
+                            continue
 
             return False
 
-    return False
+def remove_no_confirms(deck_id):
+    tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id)
+    if tx.first() is None:
+        pass
+    else:
+        tx.delete()
+        db.session.commit()
+
 
 def init_pa():
     init_p2thkeys()

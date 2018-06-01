@@ -2,6 +2,7 @@ from flask import jsonify, redirect, url_for, request, Blueprint, abort
 from sqlalchemy.sql.functions import func
 from utils.extensions import rq
 from models import db, Card, Deck, Balance
+from utils.data import update_state, which_deck
 from conf import *
 
 api = Blueprint('api', __name__)
@@ -100,4 +101,14 @@ def total(deck_id):
         else:
             return jsonify( {'Error:': 'Invalid card transfers found in database', 'Total issued:': abs(issued), 'Total valid:': total} )
     else:
-        return jsonify({'Error:': 'No cards found for this deck.'}) 
+        return jsonify({'Error:': 'No cards found for this deck.'})
+
+@api.route('/alert', methods=['POST'])
+def alert():
+    txid = request.values.get('txid')
+    if txid is not None:
+        deck = which_deck(txid)
+        if (deck is not None) and (deck['deck_id'] in subscribed):
+            state = update_state(deck['deck_id'])
+            return jsonify(state)
+    return jsonify({'walletnotify': False, 'deck_id': ''})
