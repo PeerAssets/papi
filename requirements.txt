@@ -7,5 +7,5 @@ Flask-RQ2==18.0
 Redis==2.10.6
 
 peercoin_rpc
--e git://github.com/PeerAssets/pypeerassets@master#egg=pypeerassets
--e git://github.com/PeerAssets/btcpy@master#egg=btcpy
+pypeerassets
+peerassets-btcpy
