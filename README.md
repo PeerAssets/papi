@@ -4,7 +4,7 @@
 
 ## Dependencies:
 ```
-pip install flask, flask-sqlalchemy
+located in requirements.txt
 ```
 ## Configure (conf.py)
 - **testnet**:
@@ -26,9 +26,13 @@ pip install flask, flask-sqlalchemy
     List of deck id's that will be taken as P2TH keys, imported into the local node, and
     be processed into the local database. This process includes recording one entry into 
     the Deck table and continual entries into the Card table.
+ 
+- **batch**:
+    Boolean which, when True, uses Redis Queue to enqueue walletnotify tasks ( Currently not supported ). When False papi will         instantaneously process the walletnotify transactions as they occur and update deckstates accordingly.
+    
 ## Running the Flask Server
 ```
-python app.py
+python main.py
 ```
 This will create the local sqlite database file named *papi.db*
 
