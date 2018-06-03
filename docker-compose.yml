@@ -34,7 +34,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /srv/docker/postgresql:/var/lib/postgresql
+      - /opt/papi/db:/var/lib/postgresql
     restart: always
   papi:
     restart: always
