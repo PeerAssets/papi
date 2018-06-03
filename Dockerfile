@@ -15,8 +15,6 @@ WORKDIR ${APP_DIRECTORY}
 
 COPY requirements.txt ${APP_DIRECTORY}/
 
-COPY docker-entrypoint.sh ${APP_DIRECTORY}/
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY papi/ ${APP_DIRECTORY}/
