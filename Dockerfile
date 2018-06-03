@@ -1,3 +1,13 @@
+FROM postgres
+
+ENV POSTGRES_USER docker
+
+ENV POSTGRES_PASSWORD papipass
+
+ENV POSTGRES_DB papi
+
+ENV PGDATA /var/lib/postgresql/data
+
 FROM tiangolo/uwsgi-nginx-flask:python3.6-alpine3.7
 
 ENV USERNAME=papi \
@@ -6,14 +16,17 @@ ENV USERNAME=papi \
 RUN addgroup -S ${USERNAME} \
     && adduser -D -H -S -s /bin/false -u 1000 -G ${USERNAME} ${USERNAME} \
     && apk add --update \
-        git \
+        --virtual build-deps postgresql-dev postgresql-client python3-dev gcc musl-dev\
+    && pip install psycopg2\
     && rm -rf /var/cache/apk/*
-
-COPY requirements.txt ${APP_DIRECTORY}/
 
 WORKDIR ${APP_DIRECTORY}
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY requirements.txt ${APP_DIRECTORY}/
+
+COPY docker-entrypoint.sh ${APP_DIRECTORY}/
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY papi/ ${APP_DIRECTORY}/
 
@@ -27,4 +40,6 @@ ENV LISTEN_PORT 5555
 
 EXPOSE 5555
 
-ENTRYPOINT ["python3", "main.py"]
+EXPOSE 5432
+
+ENTRYPOINT ["sh","./docker-entrypoint.sh", "--", "python3", "main.py"]

@@ -17,6 +17,19 @@ services:
       -rpcallowip=*
       -rpcport=19904
       -walletnotify='/app/transaction.py %s'
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_PASSWORD=papipass
+      - POSTGRES_USER=docker
+      - POSTGRES_DB=papi
+    ports:
+      - "5432:5432"
+    volumes:
+      - /data/postgres:/data/postgres
+    restart: always
+    links:
+      - peercoind
   papi:
     restart: always
     build: .
@@ -24,6 +37,7 @@ services:
       - "5555:5555"
     depends_on:
       - peercoind
+      - postgres
     environment:
       - PA_TESTNET=true
       - PA_PRODUCTION=true
@@ -33,4 +47,4 @@ services:
       - RPC_PORT=19904
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
-    command: ["peercoind:19904", "--", "python3", "main.py"]
+    command: ["peercoind:19904"]
