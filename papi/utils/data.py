@@ -14,9 +14,19 @@ def init_p2thkeys():
         pa.pautils.load_p2th_privkey_into_local_node(node, production)
 
 
+def commit():
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+
+
 def add_deck(deck):
     if deck is not None:
-        entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
+        try:
+            entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
+        except:
+            entry = None
         if '*' in subscribed:
             subscribe = True
         else:
@@ -27,25 +37,29 @@ def add_deck(deck):
                 data = hexlify(deck.asset_specific_data).decode()
                 D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe, data)
                 db.session.add(D)
-                db.session.commit()
+                commit()
             except Exception as e:
                 print(e)
                 pass
         else:
             db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
-            db.session.commit()
+            commit()
 
 
 def add_cards(cards):
     if cards is not None:
         for card in cards:
-            entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+            try:
+                entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+            except:
+                entry = None
+            
             if not entry:
                 data = hexlify(card.asset_specific_data).decode()
                 C = Card( card.txid, card.blockhash, card.cardseq, card.receiver[0], card.sender, 
                 card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False, data )
                 db.session.add(C)
-            db.session.commit()
+            commit()
 
 
 def load_key(deck_id):
@@ -101,7 +115,6 @@ def update_state(deck_id):
         return
 
 def which_deck(txid):
-    import pypeerassets as pa
     deck = node.gettransaction(txid)
     deck_id = None
 
@@ -143,7 +156,10 @@ def checkpoint(deck_id):
         ''' Make sure txs is a list rather than a dict with an error. Reverse list order.'''
         checkpoint = txs[::-1]
         ''' Get the most recent card transaction recorded in the database for the given deck '''
-        _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
+        try:
+            _checkpoint = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum.desc()).first()
+        except:
+            _checkpoint = None
 
         if _checkpoint is None:
             return False
@@ -172,12 +188,16 @@ def checkpoint(deck_id):
             return False
 
 def remove_no_confirms(deck_id):
-    tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id)
-    if tx.first() is None:
+    try:
+        tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id).first()
+    except:
+        tx = None
+
+    if tx is None:
         pass
     else:
         tx.delete()
-        db.session.commit()
+        commit()
 
 
 def init_pa():

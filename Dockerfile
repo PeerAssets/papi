@@ -11,11 +11,13 @@ RUN addgroup -S ${USERNAME} \
     && apk --purge del build-base \
     && rm -rf /var/cache/apk/*
 
-COPY requirements.txt ${APP_DIRECTORY}/
-
 WORKDIR ${APP_DIRECTORY}
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY requirements.txt ${APP_DIRECTORY}/
+
+COPY docker-entrypoint.sh ${APP_DIRECTORY}/
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY papi/ ${APP_DIRECTORY}/
 
