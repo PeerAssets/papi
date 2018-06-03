@@ -1,7 +1,7 @@
 from os import environ
 
 # db connection URI to be passed to sqlalchemy, as in http://docs.sqlalchemy.org/en/latest/core/engines.html
-db_engine = environ.get('DB', 'sqlite:///papi.db')
+db_engine = environ.get('DB', None)
 # check if app is running in docker
 app_env = environ.get('APP_ENV', None)
 # run on testnet or not
