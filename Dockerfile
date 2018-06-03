@@ -5,8 +5,10 @@ ENV USERNAME=papi \
 
 RUN addgroup -S ${USERNAME} \
     && adduser -D -H -S -s /bin/false -u 1000 -G ${USERNAME} ${USERNAME} \
-    && apk add --update \
-        git \
+    && apk --update --no-cache add build-base \
+    && apk add postgresql-dev \
+    && python3 -m pip install psycopg2 --no-cache-dir \
+    && apk --purge del build-base \
     && rm -rf /var/cache/apk/*
 
 COPY requirements.txt ${APP_DIRECTORY}/
