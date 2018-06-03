@@ -14,9 +14,21 @@ services:
         target: /data
     command:
       -testnet
+      -nominting
       -rpcallowip=*
       -rpcport=19904
-      -walletnotify='/app/transaction.py %s'
+  postgres:
+    image: sameersbn/postgresql:9.6-2
+    environment:
+      - DEBUG=false
+      - POSTGRES_PASSWORD=papipass
+      - POSTGRES_USER=docker
+      - POSTGRES_DB=papi
+    ports:
+      - "5432:5432"
+    volumes:
+      - /srv/docker/postgresql:/var/lib/postgresql
+    restart: always
   papi:
     restart: always
     build: .
@@ -24,6 +36,7 @@ services:
       - "5555:5555"
     depends_on:
       - peercoind
+      - postgres
     environment:
       - PA_TESTNET=true
       - PA_PRODUCTION=true
@@ -33,4 +46,5 @@ services:
       - RPC_PORT=19904
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
+      - DB='postgresql://docker:papipass@postgres:5432/papi'
     command: ["peercoind:19904", "--", "python3", "main.py"]
