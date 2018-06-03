@@ -20,10 +20,17 @@ services:
   postgres:
     image: sameersbn/postgresql:9.6-2
     environment:
-      - DEBUG=false
-      - POSTGRES_PASSWORD=papipass
-      - POSTGRES_USER=docker
-      - POSTGRES_DB=papi
+      - DB_USER=docker
+      - DB_PASS=papipass
+      - DB_NAME=papi
+      - DB_TEMPLATE=
+
+      - DB_EXTENSION=
+
+      - REPLICATION_MODE=
+      - REPLICATION_USER=
+      - REPLICATION_PASS=
+      - REPLICATION_SSLMODE=
     ports:
       - "5432:5432"
     volumes:
