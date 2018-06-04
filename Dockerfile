@@ -17,7 +17,7 @@ COPY requirements.txt ${APP_DIRECTORY}/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY papi/ ${APP_DIRECTORY}/
+COPY ./app ${APP_DIRECTORY}/
 
 RUN chown -R ${USERNAME}:${USERNAME} ${APP_DIRECTORY}
 
