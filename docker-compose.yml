@@ -17,6 +17,7 @@ services:
       -nominting
       -rpcallowip=*
       -rpcport=19904
+#      -walletnotify='/data/transaction.py %s'
   postgres:
     image: sameersbn/postgresql:9.6-2
     environment:
@@ -40,7 +41,7 @@ services:
     restart: always
     build: .
     ports:
-      - "5555:5555"
+      - "5555:80"
     depends_on:
       - peercoind
       - postgres
@@ -54,4 +55,4 @@ services:
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
       - DB=postgresql://docker:papipass@postgres:5432/papi
-    command: ["peercoind:19904", "--", "python3", "main.py"]
+    command: ["python3", "main.py"]
