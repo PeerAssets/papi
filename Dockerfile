@@ -17,5 +17,3 @@ ENV APP_ENV=docker
 ENV LISTEN_PORT 5555
 
 EXPOSE 5555
-
-ENTRYPOINT ["python3", "main.py"]
