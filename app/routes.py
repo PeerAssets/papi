@@ -1,7 +1,9 @@
 from flask import jsonify, redirect, url_for, request, Blueprint, abort
 from sqlalchemy.sql.functions import func
-from models import db, Card, Deck, Balance
-from app import *
+from main import *
+from models import *
+from conf import *
+
 
 api = Blueprint('api', __name__)
 
@@ -108,14 +110,3 @@ def alert():
         state = which_deck(txid)
         return jsonify(state)
     return jsonify({'walletnotify': False, 'deck_id': ''})
-
-
-'''
-import pypeerassets as pa
-@api.route('/node', methods=['GET'])
-def nodes():
-    decks = pa.find_all_valid_decks(node,1,1)
-    #sys.stdout.flush()
-    #init_cards(decks)
-    return jsonify({'getinfo': node.getinfo(),'decks': str([deck for deck in decks]),'listaccounts':node.listaccounts()})
-    '''

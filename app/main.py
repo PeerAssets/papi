@@ -1,7 +1,9 @@
 import pypeerassets as pa
 from binascii import hexlify, unhexlify
 from sqlalchemy.exc import IntegrityError
-from app import db, Deck, Card, Balance, Sync
+from models import db, Card, Deck, Balance
+from utils.state import init_state
+from utils.sync import Sync
 from conf import *
 import sys
 
@@ -81,7 +83,7 @@ def add_cards(deck):
 def update_decks(txid):
     try:
         deck = pa.find_deck(node, txid, version)
-        add_deck(deck)
+        add_deck(deck) 
     except KeyError:
         ''' Transaction most likely still in mempool '''
         pass
@@ -172,7 +174,7 @@ def checkpoint(deck):
 
 def remove_no_confirms(deck_id):
     try:
-        tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id).first()
+        tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id)
     except:
         tx = None
 
@@ -181,8 +183,3 @@ def remove_no_confirms(deck_id):
     else:
         tx.delete()
         commit()
-
-
-if __name__ == '__main__':
-    init_pa()
-    app.run(host='0.0.0.0', port=80)
