@@ -8,9 +8,6 @@ import sys
 connection = Sync().connect()
 node = connection.node
 
-if __name__ == '__main__':
-    init_pa()
-    app.run(host='0.0.0.0', port=80)
 
 def init_p2thkeys():
 
@@ -184,3 +181,8 @@ def remove_no_confirms(deck_id):
     else:
         tx.delete()
         commit()
+
+
+if __name__ == '__main__':
+    init_pa()
+    app.run(host='0.0.0.0', port=80)
