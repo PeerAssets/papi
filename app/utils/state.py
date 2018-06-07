@@ -1,12 +1,16 @@
 from pypeerassets.protocol import IssueMode
-from app import db, Card, Deck, Balance
+from app import *
 from conf import subscribed
+
 class DeckState:
 
     def __init__(self, deck_id: str):
         self.deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
         self.short_id = deck_id[0:10]
-        self.mode = IssueMode(self.deck.issue_mode).name
+        try:
+            self.mode = IssueMode(self.deck.issue_mode).name
+        except ValueError:
+            return
         self.issuer = self.deck.issuer
         self.cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq)
         self.counter()
@@ -154,13 +158,13 @@ class DeckState:
         Sender = self.balances.filter(Balance.account == card.sender)
 
         if Receiver.first() is not None:
-            Receiver.first().update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
+            Receiver.update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
         else:
             B = Balance('CardBurn', amount, self.short_id, card.blockhash)
             db.session.add(B)
             db.session.commit()
 
-        Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
+        Sender.update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
         return
 
     def process_transaction(self, card, amount: int = None):
@@ -175,7 +179,7 @@ class DeckState:
         if Sender.first().value >= amount:
             Receiver = self.balances.filter(Balance.account == card.receiver)
             if card.ctype == "CardBurn":
-                process_burn(card)
+                self.process_burn(card)
                 return
 
             elif Receiver.first() is None:
@@ -183,11 +187,11 @@ class DeckState:
                 db.session.add(B)
                 db.session.commit()
             else:
-                Receiver = self.balances.fiter(Balance.account == card.receiver)
-                Receiver.first().update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
+                Receiver = self.balances.filter(Balance.account == card.receiver)
+                Receiver.update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
 
             Sender = self.balances.filter(Balance.account == card.sender)
-            Sender.first().update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
+            Sender.update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
             db.session.commit()
 
         return
@@ -208,13 +212,13 @@ class DeckState:
             else:
                 if self.mode == IssueMode(16).name:
                     if ( card.sender == self.deck.issuer ):
-                        process_transaction(card)
+                        self.process_transaction(card)
 
                 elif self.mode == IssueMode(52).name:
                     pass # Need to include blocktime into db per card
                 
                 else:
-                    process_transaction(card)
+                    self.process_transaction(card)
     
 
 def init_state(deck_id):

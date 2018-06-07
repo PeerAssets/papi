@@ -1,10 +1,8 @@
 from flask import Flask
 from conf import *
 from routes import *
-from models import *
 from utils.extensions import rq
 from utils.restless import init_restless
-from utils.sync import Sync
 
 def create_app(config=None, app_name=None):
 
