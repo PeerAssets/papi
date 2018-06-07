@@ -32,7 +32,7 @@ services:
       - REPLICATION_PASS=
       - REPLICATION_SSLMODE=
     ports:
-      - "5432:5432"
+      - "5432"
     volumes:
       - /opt/papi/db:/var/lib/postgresql
     restart: always
@@ -54,4 +54,3 @@ services:
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
       - DB=postgresql://docker:papipass@postgres:5432/papi
-    command: ["peercoind:19904", "--", "python3", "main.py"]

@@ -31,7 +31,7 @@ class Card(db.Model):
     cardseq = db.Column(db.Integer, primary_key=True)
     receiver = db.Column(db.String)
     sender = db.Column(db.String)
-    amount = db.Column(db.Integer)
+    amount = db.Column(db.BigInteger)
     ctype = db.Column(db.String)
     blocknum = db.Column(db.Integer)
     blockseq = db.Column(db.Integer, primary_key=True)
@@ -61,7 +61,7 @@ class Balance(db.Model):
     __tablename__ = 'balances' 
     id = db.Column(db.Integer,primary_key=True, unique=True)
     account = db.Column(db.String)
-    value = db.Column(db.Integer)
+    value = db.Column(db.BigInteger)
     short_id = db.Column(db.String)
     checkpoint = db.Column(db.String)
     #----------------------------------------------------------------------

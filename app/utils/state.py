@@ -1,7 +1,6 @@
 from pypeerassets.protocol import IssueMode
-from .data import *
+from app import db, Card, Deck, Balance
 from conf import subscribed
-
 class DeckState:
 
     def __init__(self, deck_id: str):
@@ -222,5 +221,6 @@ def init_state(deck_id):
     try:
         DeckState(deck_id)
     except Exception as e:
+        print(e)
         pass
     return
