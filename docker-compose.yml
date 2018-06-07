@@ -1,8 +1,8 @@
 version: '3.5'
 services:
   peercoind:
+    build: ./peercoind
     restart: always
-    image: peerchemist/peercoind
     ports:
       - "19904:19904"
     environment:
@@ -17,7 +17,7 @@ services:
       -nominting
       -rpcallowip=*
       -rpcport=19904
-#      -walletnotify='/data/transaction.py %s'
+      -walletnotify='/usr/local/bin/transaction.py %s'
   postgres:
     image: sameersbn/postgresql:9.6-2
     environment:
@@ -55,4 +55,3 @@ services:
       - RPC_USERNAME=papi
       - RPC_PASSWORD=papipass
       - DB=postgresql://docker:papipass@postgres:5432/papi
-    command: ["python3", "main.py"]
