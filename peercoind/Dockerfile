@@ -1,6 +1,5 @@
 FROM peerchemist/peercoind
 
-RUN apk --no-cache add python3 py3-pip \
-    && pip3 install --no-cache-dir requests
+RUN apk --no-cache add curl
 
-COPY transaction.py /usr/local/bin
+COPY transaction.sh /usr/local/bin

@@ -17,7 +17,7 @@ services:
       -nominting
       -rpcallowip=*
       -rpcport=19904
-      -walletnotify='/usr/local/bin/transaction.py %s'
+      -walletnotify='/usr/local/bin/transaction.sh %s'
   postgres:
     image: sameersbn/postgresql:9.6-2
     environment:
