@@ -2,24 +2,28 @@ import pypeerassets as pa
 from main import node, add_deck, add_cards, validate
 from utils.state import init_state
 from sys import stdout
+from conf import subscribed
 
 
 accounts = node.listaccounts()
+total = sum( 1 for deck in  pa.find_all_valid_decks(node,1,1) )
 
 def message(n):
-    print('\r{} Decks Loaded\r'.format(n))
+    print('{} of {} Decks Loaded'.format(n+1, total))
     stdout.flush()
 
-for i, deck in enumerate( pa.find_all_valid_decks(node,1,1) ):
-
-    add_deck(deck)
-    message(i)
-    if deck.id not in accounts:
-        validate(deck)
-
-    try:
-        add_cards(deck)
-    except IndexError:
+for n, deck in enumerate( pa.find_all_valid_decks(node,1,1) ):
+    
+    if not any(deck_id in subscribed for deck_id in ('*', deck.id)):
         continue
-        
-    init_state(deck.id)
+    else:
+        add_deck(deck)
+        message(n)
+        if deck.id not in accounts:
+            validate(deck)
+
+        try:
+            add_cards(deck)
+            init_state(deck.id)
+        except IndexError:
+            continue
