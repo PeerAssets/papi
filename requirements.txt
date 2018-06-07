@@ -3,10 +3,6 @@ SQLAlchemy==1.2.2
 Flask-SQLAlchemy==2.3.2
 Flask-Cors==3.0.3
 Flask-Restless==0.17.0
-<<<<<<< HEAD
-Flask-RQ2==18.0
-=======
->>>>>>> d239edd51f143a26aae883e376b7180af23d0241
 
 peercoin_rpc>=0.57
 peerassets-btcpy
