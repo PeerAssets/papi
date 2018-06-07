@@ -1,6 +1,7 @@
 # papi
-### PeerAssets API
-*Requires Python 3.4+ and pypeerassets*
+*PeerAssets API*
+
+*Requires Python 3.5+ and pypeerassets*
 
 ## Dependencies:
 ```
