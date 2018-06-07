@@ -33,7 +33,7 @@ services:
       - REPLICATION_PASS=
       - REPLICATION_SSLMODE=
     ports:
-      - "5432:5432"
+      - "5432"
     volumes:
       - /opt/papi/db:/var/lib/postgresql
     restart: always

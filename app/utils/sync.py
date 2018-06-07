@@ -1,4 +1,4 @@
-from pypeerassets import RpcNode
+import pypeerassets as pa
 from requests.exceptions import ConnectionError
 from time import sleep
 from conf import *
@@ -9,7 +9,7 @@ class Sync:
         self.synced = False
         self.info = None
         if node is None:
-            self.node = RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
+            self.node = pa.RpcNode(testnet=testnet, username=rpc_username, password=rpc_password,
                             ip=rpc_host, port=rpc_port)
         else:
             self.node = node
@@ -30,14 +30,26 @@ class Sync:
 
         if recent:
                 threshold = max(recent) - 500
-                if self.info['blocks'] < threshold:
-                    ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
-                    self.synced = False
+                if 'blocks' in self.info:
+                    if self.info['blocks'] < threshold:
+                        ''' Checking if the local node is sync'd at least 500 blocks behind peer with max blocks'''
+                        self.synced = False
+                    else:
+                        ''' Node is now synced and the function returns True to begin papi initialization'''
+                        self.synced = True
                 else:
-                    ''' Node is now synced and the function returns True to begin papi initialization'''
-                    self.synced = True
+                    return False
                     
         return self.synced
+
+class ExceededAttempts(Exception):
+    def __init__(self, message):
+        super().__init__()
+        self.message = 'Max Attempts Exceeded'
+
+def attempt_check(attempts):
+    if attempts > max_attempts:
+        raise ExceededAttempts
 
 
 def attempt_connection(node):
@@ -55,21 +67,23 @@ def attempt_connection(node):
             if attempts > max_attempts:
                 break
 
-            sys.stdout.write('Waiting for connection to local node. Attempt(s): {} of {}\r'.format(attempts, max_attempts))
-            
-            sleep(3)
+            sys.stdout.write('\rWaiting for connection to local node. Attempt(s): {} of {}\n'.format(attempts, max_attempts))
+            sys.stdout.flush()
+            sleep(1)
             continue
 
         try:
             connection = Sync(node)
             recent = connection.get_recent()
+            info = node.getinfo()
             if connection.is_synced:
                 ''' if node is synced with the network then break and continue papi initialization'''
                 return connection
                 break
             elif recent:
                 ''' if node is not synced then wait 3 seconds and try again '''
-                sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(info['blocks'], max(recent)))
+                sys.stdout.write('\rLocal node is not completely synced. Block {} of {}'.format(self.info['blocks'], max(recent)))
+                sys.stdout.flush()
                 sleep(3)
                 continue
             else:
@@ -80,16 +94,15 @@ def attempt_connection(node):
             if isinstance(e,FileNotFoundError):
                 ''' This will occur if local node configuration file is not created/defined with correct RPC parameters'''
                 sys.stdout.write('Waiting for RPC parameters\r') 
+                sys.stdout.flush()
             else:
                 print(e)
-                sys.stdout.write('Waiting for connection to peers. Attempt(s): {} of {}\r'.format(attempts, max_attempts))
+                try:
+                    attempt_check(attempts)
+                    sys.stdout.write('Waiting for connection to peers. Attempt(s): {} of {}\r'.format(attempts, max_attempts))
+                    sys.stdout.flush()
+                except ExceededAttempts as error:
+                    print('Exceeded max attempts": {}'.format(error.message))
 
             sleep(3)
             continue
-
-''' Connection attempt to local node'''
-connection = Sync().connect()
-try:
-    node = connection.node
-except AttributeError:
-    raise Exception('Could not connect to local node. Papi shutting down..')
