@@ -12,8 +12,8 @@ def create_app(config=None, app_name=None):
     ''' Setup'''
     app.config['SQLALCHEMY_DATABASE_URI'] = db_engine
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['RQ_REDIS_URL'] = 'redis://localhost:6379/0'
-    app.config['RQ_ASYNC'] = True
+    #app.config['RQ_REDIS_URL'] = 'redis://localhost:6379/0'
+    #app.config['RQ_ASYNC'] = True
     configure_extensions(app)
     configure_blueprints(app)
     return app
