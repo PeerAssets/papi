@@ -34,7 +34,7 @@
 
 ## How To Use
 
-To clone and run this application, you'll need [Git](https://git-scm.com) and [Docker](https://www.docker.com/community-edition)From your command line:
+To clone and run this application, you'll need [Git](https://git-scm.com) and [Docker](https://www.docker.com/community-edition). From your command line:
 
 ```
 # Clone this repository
