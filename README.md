@@ -1,42 +1,80 @@
-# papi
-*PeerAssets API*
 
-*Requires Python 3.5+ and pypeerassets*
+<h1 align="center">
+  <br>
+  <a href="https://peerassets.github.io/WhitePaper/"><img src="https://github.com/PeerAssets/logofiles/blob/master/svg/PeerAssets_icon.svg" alt="PeerAssets" width="300"></a>
+  <br>
+  papi
+  <br>
+</h1>
 
-## Dependencies:
+<h4 align="center">A minimal PeerAssets API <a href="http://flask.pocoo.org/" target="_blank">Flask</a>.</h4>
+
+<p align="center">
+  <a href="#key-features">Key Features</a> •
+  <a href="#how-to-use">How To Use</a> •
+  <a href="#download">Download</a> •
+  <a href="#credits">Credits</a> •
+  <a href="#related">Related</a> •
+  <a href="#license">License</a>
+</p>
+
+![Imgur](https://i.imgur.com/6T5thkm.gif)
+
+## Key Features
+
+* Supports Deck Autoloading
+  - Instantly locate all PeerAssets decks on host chain .
+* Supports Deck Subscription
+  - Gives you the option to subscribe to all decks and downloads all relevant cards from the blockchain.
+* Restless
+  - Provides a restless API endpoint. `/restless/v1/`
+* Postgres DB
+* Docker with peercoind container
+* Nginx server using uwsgi to server the Flask application
+
+## How To Use
+
+To clone and run this application, you'll need [Git](https://git-scm.com) and [Docker](https://www.docker.com/community-edition)From your command line:
+
 ```
-located in requirements.txt
+# Clone this repository
+$ git clone https://github.com/peerassets/papi
+
+# Go into the repository
+$ cd papi
+
+# Install and run
+$ docker-compose up
+
 ```
-## Configure (conf.py)
-- **testnet**:
-    Boolean dictating whether the network is mainnet or testnet
 
-- **production**:
-    Boolean dictating whether to query production assets or non-production assets.
+## Download
 
-- **autoload**:
-    Boolean which, when True, loads the P2TH key corresponding to the current network
-    and production state into the local node. If walletnotify is going to be used it is
-    recommended that autoload is set to False. If False then papi is informed of only new 
-    transactions pertaining to subscribed decks.
+You can [download](https://github.com/peerassets/papi) latest installable version of papi for Linux.
 
-- **version**:
-    Integer corresponding to the PeerAssets protocol version being used.
+## Credits
 
-- **subscribed**:
-    List of deck id's that will be taken as P2TH keys, imported into the local node, and
-    be processed into the local database. This process includes recording one entry into 
-    the Deck table and continual entries into the Card table.
- 
-- **batch**:
-    Boolean which, when True, uses Redis Queue to enqueue walletnotify tasks ( Currently not supported ). When False papi will         instantaneously process the walletnotify transactions as they occur and update deckstates accordingly.
-    
-## Running the Flask Server
-```
-python main.py
-```
-This will create the local sqlite database file named *papi.db*
+This software uses code from several open source packages.
 
-## running in docker
+- [Docker](https://www.docker.com/community-edition)
+- [Peercoind](https://peercoin.net/)
+- [Flask](http://flask.pocoo.org/)
+- [Flask-Restless](https://flask-restless.readthedocs.io/en/stable/)
+- [Flask-SQLAlchemy](http://flask-sqlalchemy.pocoo.org/2.3/)
 
-`docker-compose up -d`
+## Related
+
+[PeerAssets](https://peerassets.github.io/WhitePaper/) - PeerAssets Whitepapaer
+
+## Support
+
+`Peercoin: PT2bYcAZn6pUUiFnaD7ETn71zEvATAPHWi` 
+
+## You may also like...
+
+- [Chizukeki](https://github.com/PeerAssets/chizukeki) - A PeerAssets Wallet
+- [pypeerassets](https://github.com/PeerAssets/pypeerassets) - A Python implementation of PeerAssets
+
+## License
+
+MIT
