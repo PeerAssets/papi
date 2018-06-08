@@ -1,11 +1,17 @@
 from flask import jsonify, redirect, url_for, request, Blueprint, abort
 from sqlalchemy.sql.functions import func
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from main import *
 from models import *
 from conf import *
 
 
 api = Blueprint('api', __name__)
+
+engine = create_engine(db_engine)
+Session = sessionmaker(bind=engine)
+session = Session()
 
 @api.route('/')
 def index():
@@ -18,7 +24,7 @@ def decks(deck_id):
 
     def get_cards(deck_id):
         cards = []
-        Cards = db.session.query(Card).filter(Card.deck_id == deck_id)
+        Cards = session.query(Card).filter(Card.deck_id == deck_id)
         
         if request.values.get('address'):
             address = request.values.get('address')
@@ -37,7 +43,7 @@ def decks(deck_id):
         return cards
 
     if deck_id is not None:
-        deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
+        deck = session.query(Deck).filter(Deck.id == deck_id).first()
         if deck:
             deck = deck.__dict__
             del deck['_sa_instance_state']
@@ -46,9 +52,9 @@ def decks(deck_id):
     else:
         decks = []
         if not autoload:
-            Decks = db.session.query(Deck).filter(Deck.id.in_(subscribed)).all()
+            Decks = session.query(Deck).filter(Deck.id.in_(subscribed)).all()
         else:
-            Decks = db.session.query(Deck).all()
+            Decks = session.query(Deck).all()
         for deck in Decks:
             deck = deck.__dict__
             del deck['_sa_instance_state']
@@ -60,7 +66,7 @@ def decks(deck_id):
 def balances(deck_id):
     short_id = deck_id[0:10]
     balances = {}
-    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
+    Balances = session.query(Balance).filter( Balance.short_id == short_id  )
 
     if request.args.get('address'):
         Balances = Balances.filter( Balance.account == request.args.get('address') )
@@ -80,10 +86,10 @@ def balances(deck_id):
 @api.route('/api/v1/decks/<deck_id>/total', methods=['GET'], strict_slashes=False)
 def total(deck_id):
 
-    issuer = db.session.query(Deck).filter(Deck.id == deck_id).first().issuer
+    issuer = session.query(Deck).filter(Deck.id == deck_id).first().issuer
     short_id = deck_id[0:10]
     balances = []
-    Balances = db.session.query(Balance).filter( Balance.short_id == short_id  )
+    Balances = session.query(Balance).filter( Balance.short_id == short_id  )
     Issued = Balances.filter( Balance.account.contains(issuer)).filter(func.char_length( Balance.account ) > 34)
     Accounts = Balances.filter( func.char_length( Balance.account ) == 34)
 

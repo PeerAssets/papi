@@ -1,7 +1,9 @@
 import pypeerassets as pa
 from binascii import hexlify, unhexlify
 from sqlalchemy.exc import IntegrityError
-from models import db, Card, Deck, Balance
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models import Card, Deck, Balance
 from utils.state import init_state
 from utils.sync import Sync
 from conf import *
@@ -10,6 +12,9 @@ import sys
 connection = Sync().connect()
 node = connection.node
 
+engine = create_engine(db_engine)
+Session = sessionmaker(bind=engine)
+session = Session()
 
 def init_p2thkeys():
 
@@ -28,15 +33,15 @@ def load_key(deck):
 
 def commit():
     try:
-        db.session.commit()
+        session.commit()
     except:
-        db.session.rollback()
+        session.rollback()  
 
 
 def add_deck(deck):
     if deck is not None:
         try:
-            entry = db.session.query(Deck).filter(Deck.id == deck.id).first()
+            entry = session.query(Deck).filter(Deck.id == deck.id).first()
         except:
             entry = None
 
@@ -46,14 +51,13 @@ def add_deck(deck):
             try:
                 data = hexlify(deck.asset_specific_data).decode()
                 D = Deck( deck.id, deck.name, deck.issuer, deck.issue_mode, deck.number_of_decimals, subscribe, data)
-                db.session.add(D)
-                commit()
+                session.add(D)
             except Exception as e:
-                sys.stdout.flush()
                 pass
         else:
-            db.session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
-            commit()
+            session.query(Deck).filter(Deck.id == deck.id).update({"subscribed": subscribe})
+
+        commit()
 
 
 def add_cards(deck):
@@ -65,7 +69,7 @@ def add_cards(deck):
     for n, card in enumerate(pa.find_all_valid_cards(node, deck)):
 
         try:
-            entry = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+            entry = session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
         except (Exception,TypeError) as e:
             if isinstance(e, TypeError):
                 continue
@@ -75,9 +79,9 @@ def add_cards(deck):
             data = hexlify(card.asset_specific_data).decode()
             C = Card( card.txid, card.blockhash, card.cardseq, card.receiver[0], card.sender, 
             card.amount[0], card.type, card.blocknum, card.blockseq, card.deck_id, False, data )
-            db.session.add(C)
-            commit()
-        #message(n)
+            session.add(C)
+    commit()
+    #message(n)
             
 
 def update_decks(txid):
@@ -145,7 +149,7 @@ def checkpoint(deck):
         checkpoint = txs[::-1]
         ''' Get the most recent card transaction recorded in the database for the given deck '''
         try:
-            _checkpoint = db.session.query(Card).filter(Card.deck_id == deck.id).order_by(Card.blocknum.desc()).first()
+            _checkpoint = session.query(Card).filter(Card.deck_id == deck.id).order_by(Card.blocknum.desc()).first()
         except:
            _checkpoint = None
 
@@ -174,7 +178,7 @@ def checkpoint(deck):
 
 def remove_no_confirms(deck_id):
     try:
-        tx = db.session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id)
+        tx = session.query(Card).filter(Card.blockhash == "").filter(Card.blocknum == 0).filter(Card.deck_id == deck_id)
     except:
         tx = None
 

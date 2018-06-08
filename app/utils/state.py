@@ -1,25 +1,40 @@
 from pypeerassets.protocol import IssueMode
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from app import *
 from conf import subscribed
+
+
+engine = create_engine(db_engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+
+def commit():
+    try:
+        session.commit()
+    except:
+        session.rollback()
+
 
 class DeckState:
 
     def __init__(self, deck_id: str):
-        self.deck = db.session.query(Deck).filter(Deck.id == deck_id).first()
+        self.deck = session.query(Deck).filter(Deck.id == deck_id).first()
         self.short_id = deck_id[0:10]
         try:
             self.mode = IssueMode(self.deck.issue_mode).name
         except ValueError:
             return
         self.issuer = self.deck.issuer
-        self.cards = db.session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq)
+        self.cards = session.query(Card).filter(Card.deck_id == deck_id).order_by(Card.blocknum,Card.blockseq,Card.cardseq)
         self.counter()
         self.process_cards()
 
     @property
     def balances(self):
         ''' Get all balances that correspond with the current deck '''
-        return db.session.query(Balance).filter(Balance.short_id == self.short_id)
+        return session.query(Balance).filter(Balance.short_id == self.short_id)
 
     def counter(self):
         ''' Get the block number that the balances for this account were last updated'''  
@@ -28,18 +43,23 @@ class DeckState:
         if Blocknum.first() is None:
             ''' If this deck does not have a 'blocknum' account in database then create one '''
             B = Balance( 'blocknum', 0, self.short_id, '' )
-            db.session.add(B)
-            db.session.commit()
+            session.add(B)
+            commit()
             Blocknum = self.balances.filter(Balance.account == 'blocknum')
 
         if Blocknum.first() is not None:
             ''' Only concerned with cards that are before the last update to balances of this deck '''
             self.cards = self.cards.filter(Card.blocknum > Blocknum.first().value)
 
-    def process_issue(self, card):
+    def process_issue(self, card, amount = None):
         c_short_id = card.txid[0:10]
-    
-        def ONCE( amount: int = card.amount ):
+
+        if amount is not None:
+            amount = amount
+        else:
+            amount = card.amount
+
+        def ONCE( amount: int = amount ):
             ''' Set Issuer object to a query of all accounts containing the deck issuing address '''
             Issuer = self.balances.filter( Balance.account.contains( self.deck.issuer ) )
 
@@ -56,9 +76,9 @@ class DeckState:
 
                         process_sender(amount, card)
                         process_receiver(amount, card)
-                        _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+                        _card = session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                         _card.valid = True
-                        db.session.commit()
+                        commit()
                         return
                     else:
                         return
@@ -67,21 +87,21 @@ class DeckState:
 
                     process_sender( amount, card )
                     process_receiver( amount, card )
-                    _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+                    _card = session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                     _card.valid = True
-                    db.session.commit()
+                    commit()
                     return
 
             elif Issuer.first() is None:
                 ''' Create a genesis CardIssue account then process receiver '''
                 B = Balance( self.deck.issuer + c_short_id , -abs(amount), self.short_id, card.blockhash)
                 try:
-                    db.session.add(B)
-                    db.session.commit()
+                    session.add(B)
+                    commit()
                     process_receiver( amount, card)
-                    _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+                    _card = session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                     _card.valid = True
-                    db.session.commit()
+                    commit()
                 except Exception as e:
                     print(e+'\r')
                     pass
@@ -97,8 +117,8 @@ class DeckState:
             
             elif Sender.first() is None:
                 B = Balance( card.sender + c_short_id , -abs(amount), self.short_id, card.blockhash)
-                db.session.add(B)
-                db.session.commit()
+                session.add(B)
+                commit()
 
         def process_receiver( amount, card):
             ''' Add receiver to db if the account doesn't exist and update receiver balance ''' 
@@ -109,8 +129,8 @@ class DeckState:
             
             if Receiver.first() is None:
                 B = Balance( card.receiver , amount, self.short_id, card.blockhash)
-                db.session.add(B)
-                db.session.commit()
+                session.add(B)
+                commit()
 
         def MULTI( amount: int = card.amount ):
             ''' Uses ONCE to create issuer id if it doesn't exist then
@@ -125,9 +145,9 @@ class DeckState:
                     process_sender( amount, card )
 
                 process_receiver( amount, card )
-                _card = db.session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
+                _card = session.query(Card).filter(Card.txid == card.txid).filter(Card.blockseq == card.blockseq).filter(Card.cardseq == card.cardseq).first()
                 _card.valid = True
-                db.session.commit()
+                commit()
                 return
             else:
                 ONCE()
@@ -146,7 +166,7 @@ class DeckState:
             ''' MONO '''
             MULTI(amount=1)
 
-        db.session.commit()
+        commit()
         return
 
     def process_burn(self, card, amount: int = None):
@@ -161,8 +181,8 @@ class DeckState:
             Receiver.update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
         else:
             B = Balance('CardBurn', amount, self.short_id, card.blockhash)
-            db.session.add(B)
-            db.session.commit()
+            session.add(B)
+            commit()
 
         Sender.update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
         return
@@ -184,15 +204,15 @@ class DeckState:
 
             elif Receiver.first() is None:
                 B = Balance(card.receiver, amount, self.short_id, card.blockhash)
-                db.session.add(B)
-                db.session.commit()
+                session.add(B)
+                commit()
             else:
                 Receiver = self.balances.filter(Balance.account == card.receiver)
                 Receiver.update( {'value': Receiver.first().value + amount}, synchronize_session='fetch' )
 
             Sender = self.balances.filter(Balance.account == card.sender)
             Sender.update( {'value': Sender.first().value - amount}, synchronize_session='fetch' )
-            db.session.commit()
+            commit()
 
         return
 
@@ -224,6 +244,7 @@ class DeckState:
 def init_state(deck_id):
     try:
         DeckState(deck_id)
+        session.close()
     except Exception as e:
         print(e)
         pass
