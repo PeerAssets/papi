@@ -6,4 +6,4 @@ Flask-Restless==0.17.0
 
 peercoin_rpc>=0.57
 peerassets-btcpy
-git+git://github.com/PeerAssets/pypeerassets@master#egg=pypeerassets
+pypeerassets>=0.4.1
