@@ -57,7 +57,7 @@ $ docker-compose up
 * Asynchronous Tasks with Flask and Redis Queue
   - Start the server and run deck/card loading simultaneously
 * Suppress `Connection refused`
-  -POST requests to papi:5555/alert from walletnotify during peercoind load and before application has started.
+  - POST requests to papi:5555/alert from walletnotify during peercoind load and before application has started.
 
 ## Download
 
