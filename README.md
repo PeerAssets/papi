@@ -12,6 +12,7 @@
 <p align="center">
   <a href="#key-features">Key Features</a> •
   <a href="#how-to-use">How To Use</a> •
+  <a href="#todo-list">TODO list</a> •
   <a href="#download">Download</a> •
   <a href="#credits">Credits</a> •
   <a href="#related">Related</a> •
@@ -28,6 +29,8 @@
   - Gives you the option to subscribe to all decks and downloads all relevant cards from the blockchain.
 * Restless
   - Provides a restless API endpoint. `/restless/v1/`
+* Mempool Tracking
+  - Via walletnotify the server knows when relevant transactions are in the mempool or receive a network confirmation.
 * Postgres DB
 * Docker with peercoind container
 * Nginx server using uwsgi to server the Flask application
@@ -47,6 +50,12 @@ $ cd papi
 $ docker-compose up
 
 ```
+
+## TODO list
+* Scan for blockchain reorgs
+  - Will remove relevant decks/cards from db and re-calculate deckstates.
+* Asynchronous Tasks with Flask and Redis Queue
+  - Start the server and run deck/card loading simultaneously
 
 ## Download
 
