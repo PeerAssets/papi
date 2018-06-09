@@ -1,10 +1,10 @@
 import pypeerassets as pa
-from main import node, add_deck, add_cards, validate
+from main import node, add_deck, add_cards, validate, init_p2thkeys
 from utils.state import init_state
 from sys import stdout
 from conf import subscribed
 
-
+init_p2thkeys()
 accounts = node.listaccounts()
 total = sum( 1 for deck in  pa.find_all_valid_decks(node,1,1) )
 
