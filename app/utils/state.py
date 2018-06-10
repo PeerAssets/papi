@@ -1,6 +1,7 @@
 from pypeerassets.protocol import IssueMode
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from models import Deck, Card, Balance
 from app import *
 from conf import subscribed
 
