@@ -3,6 +3,9 @@ from conf import *
 from routes import *
 from utils.restless import init_restless
 
+__version__ = "0.1"
+
+
 def create_app(config=None, app_name=None):
 
     app = Flask(__name__)
@@ -21,7 +24,9 @@ def configure_extensions(app):
     init_restless(app)
     init_db(app)
 
+
 def configure_blueprints(app):
     app.register_blueprint(api)
+
 
 app = create_app()
