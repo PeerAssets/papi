@@ -61,6 +61,8 @@ $ docker-compose up
   - Start the server and run deck/card loading simultaneously
 * Suppress `Connection refused`
   - POST requests to papi:5555/alert from walletnotify during peercoind load and before application has started.
+* Card parsers for all the protocol-defined issue modes
+  - PeerAssets protocol defines various issue modes, papi needs them implemented.
 
 ## Download
 
