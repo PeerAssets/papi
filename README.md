@@ -47,7 +47,7 @@ $ git clone https://github.com/peerassets/papi
 $ cd papi
 
 # Create this directory
-$ mdkir -p /opt/papi/peercoin/
+$ mkdir -p /opt/papi/peercoin/
 
 # Install and run
 $ docker-compose up
